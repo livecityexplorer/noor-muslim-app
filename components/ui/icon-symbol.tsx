@@ -52,6 +52,9 @@ const MAPPING = {
   "target": "gps-fixed",
   "checkmark.circle.fill": "check-circle",
   "checkmark": "check",
+  // Scanner / Halal
+  "qrcode.viewfinder": "qr-code-scanner",
+  "square.and.arrow.up": "ios-share",
   // General
   "paperplane.fill": "send",
   "chevron.left.forwardslash.chevron.right": "code",

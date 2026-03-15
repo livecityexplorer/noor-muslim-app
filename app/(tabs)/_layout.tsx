@@ -10,6 +10,7 @@ const TABS = [
   { name: "quran", title: "Quran", icon: "book.fill" as const, activeColor: "#4FC3F7" },
   { name: "prayer", title: "Prayer", icon: "moon.stars.fill" as const, activeColor: "#F59E0B" },
   { name: "qibla", title: "Qibla", icon: "location.north.fill" as const, activeColor: "#22C55E" },
+  { name: "scanner", title: "Scanner", icon: "qrcode.viewfinder" as const, activeColor: "#4ADE80" },
   { name: "more", title: "More", icon: "ellipsis" as const, activeColor: "#EC4899" },
 ];
 
