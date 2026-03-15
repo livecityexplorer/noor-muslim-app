@@ -35,6 +35,8 @@ const config: ExpoConfig = {
         "Noor needs your location to calculate accurate prayer times and Qibla direction.",
       NSMotionUsageDescription:
         "Noor uses your device's motion sensors for the Qibla compass.",
+      NSCameraUsageDescription:
+        "Noor uses your camera to scan product barcodes for Halal ingredient verification.",
     },
   },
   android: {
@@ -71,6 +73,14 @@ const config: ExpoConfig = {
   },
   plugins: [
     "expo-router",
+    [
+      "expo-camera",
+      {
+        "cameraPermission": "Allow Noor to access your camera to scan product barcodes for Halal verification.",
+        "microphonePermission": "Allow Noor to access your microphone.",
+        "recordAudioAndroid": false
+      }
+    ],
     [
       "expo-audio",
       {

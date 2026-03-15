@@ -129,3 +129,12 @@
 - [x] Scanner settings (via app Settings screen)
 - [x] Add Scanner tab to bottom navigation
 - [x] Add scanner icon to icon-symbol.tsx
+
+## Camera Barcode Scanner
+- [x] Install expo-camera package
+- [x] Add camera permission to app.config.ts
+- [x] Rewrite scan.tsx with live camera viewfinder and real-time barcode detection
+- [x] Scanning overlay UI: corner brackets, laser line animation, torch toggle
+- [x] Auto-navigate to product detail on successful scan
+- [x] Manual barcode entry fallback (keep existing)
+- [x] Handle camera permission denied gracefully
