@@ -13,9 +13,10 @@ describe("QuranAPI", () => {
 
   it("generates correct surah audio URL", () => {
     const url = getSurahAudioUrl("ar.alafasy", 1);
-    expect(url).toContain("mp3quran.net");
-    expect(url).toContain("afasy");
-    expect(url).toContain("001.mp3");
+    // Updated to use quranicaudio.com QDC CDN (mp3quran.net was returning 404)
+    expect(url).toContain("quranicaudio.com");
+    expect(url).toContain("mishari_al_afasy");
+    expect(url).toContain("/1.mp3");
   });
 
   it("pads surah and ayah numbers correctly", () => {

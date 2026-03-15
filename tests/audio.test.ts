@@ -1,44 +1,69 @@
 import { describe, it, expect } from "vitest";
 import { getSurahAudioUrl } from "../lib/services/QuranAPI";
 
-// Test the surah audio URL generation used by AudioPlayerContext
-describe("Full Surah Audio URLs", () => {
-  it("generates correct URL for Alafasy surah 1", () => {
+// Test the new QDC CDN surah audio URL generation
+describe("Full Surah Audio URLs (QDC CDN)", () => {
+  it("generates correct URL for Alafasy surah 1 (plain number)", () => {
     const url = getSurahAudioUrl("ar.alafasy", 1);
-    expect(url).toContain("mp3quran.net");
-    expect(url).toContain("afasy");
-    expect(url).toContain("001.mp3");
+    expect(url).toContain("quranicaudio.com/qdc");
+    expect(url).toContain("mishari_al_afasy");
+    expect(url).toContain("murattal");
+    expect(url).toContain("/1.mp3");
   });
 
   it("generates correct URL for Sudais surah 36 (Yasin)", () => {
     const url = getSurahAudioUrl("ar.abdurrahmaansudais", 36);
-    expect(url).toContain("sudais");
-    expect(url).toContain("036.mp3");
+    expect(url).toContain("abdurrahmaan_as_sudais");
+    expect(url).toContain("/36.mp3");
   });
 
   it("generates correct URL for Husary surah 114", () => {
     const url = getSurahAudioUrl("ar.husary", 114);
-    expect(url).toContain("husary");
-    expect(url).toContain("114.mp3");
+    expect(url).toContain("khalil_al_husary");
+    expect(url).toContain("/114.mp3");
   });
 
-  it("pads surah numbers to 3 digits", () => {
-    const url1 = getSurahAudioUrl("ar.alafasy", 1);
-    const url9 = getSurahAudioUrl("ar.alafasy", 9);
-    const url99 = getSurahAudioUrl("ar.alafasy", 99);
-    expect(url1).toContain("001.mp3");
-    expect(url9).toContain("009.mp3");
-    expect(url99).toContain("099.mp3");
+  it("generates correct URL for Minshawi surah 1", () => {
+    const url = getSurahAudioUrl("ar.minshawi", 1);
+    expect(url).toContain("siddiq_minshawi");
+    expect(url).toContain("/1.mp3");
+  });
+
+  it("Shuraym uses 3-digit padded numbers (CDN requirement)", () => {
+    const url1 = getSurahAudioUrl("ar.saoodshuraym", 1);
+    const url36 = getSurahAudioUrl("ar.saoodshuraym", 36);
+    const url114 = getSurahAudioUrl("ar.saoodshuraym", 114);
+    expect(url1).toContain("saud_ash-shuraym");
+    expect(url1).toContain("/001.mp3");
+    expect(url36).toContain("/036.mp3");
+    expect(url114).toContain("/114.mp3");
+  });
+
+  it("non-Shuraym reciters use plain numbers (not padded)", () => {
+    const url = getSurahAudioUrl("ar.alafasy", 1);
+    // Should be /1.mp3 not /001.mp3
+    expect(url).toContain("/1.mp3");
+    expect(url).not.toContain("/001.mp3");
   });
 
   it("falls back to Alafasy for unknown reciter", () => {
     const url = getSurahAudioUrl("ar.unknown", 1);
-    expect(url).toContain("afasy");
+    expect(url).toContain("mishari_al_afasy");
   });
 
-  it("generates valid HTTPS URLs", () => {
-    const url = getSurahAudioUrl("ar.alafasy", 1);
-    expect(url.startsWith("https://")).toBe(true);
+  it("generates valid HTTPS URLs for all reciters", () => {
+    const reciters = [
+      "ar.alafasy",
+      "ar.abdurrahmaansudais",
+      "ar.husary",
+      "ar.minshawi",
+      "ar.saoodshuraym",
+    ];
+    for (const r of reciters) {
+      const url = getSurahAudioUrl(r, 1);
+      expect(url.startsWith("https://")).toBe(true);
+      expect(url).toContain("quranicaudio.com");
+    }
   });
 
   it("all 5 reciters generate different URLs for same surah", () => {
@@ -82,6 +107,6 @@ describe("PlayingSurah structure", () => {
   it("auto-advance stops at surah 114", () => {
     const current = { surahNumber: 114, totalSurahs: 114 };
     const next = current.surahNumber + 1;
-    expect(next > current.totalSurahs).toBe(true); // Should NOT advance
+    expect(next > current.totalSurahs).toBe(true);
   });
 });

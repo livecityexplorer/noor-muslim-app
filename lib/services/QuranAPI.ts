@@ -93,9 +93,27 @@ export function getAudioUrl(reciterId: string, surahNumber: string | number, aya
 }
 
 export function getSurahAudioUrl(reciterId: string, surahNumber: number): string {
-  // Use mp3quran.net for full surah audio
-  const paddedSurah = String(surahNumber).padStart(3, "0");
-  return `https://server8.mp3quran.net/${getMP3QuranReciter(reciterId)}/${paddedSurah}.mp3`;
+  // Use quranicaudio.com QDC CDN for full surah audio
+  // Verified working CDN paths as of 2026:
+  // - Most reciters: plain number (1.mp3, 36.mp3, 114.mp3)
+  // - Shuraym: 3-digit padded (001.mp3, 036.mp3, 114.mp3)
+  const { slug, padded } = getQDCReciter(reciterId);
+  const surahStr = padded
+    ? String(surahNumber).padStart(3, "0")
+    : String(surahNumber);
+  return `https://download.quranicaudio.com/qdc/${slug}/murattal/${surahStr}.mp3`;
+}
+
+function getQDCReciter(reciterId: string): { slug: string; padded: boolean } {
+  // Verified working paths on download.quranicaudio.com/qdc/{slug}/murattal/{num}.mp3
+  const map: Record<string, { slug: string; padded: boolean }> = {
+    "ar.alafasy": { slug: "mishari_al_afasy", padded: false },
+    "ar.abdurrahmaansudais": { slug: "abdurrahmaan_as_sudais", padded: false },
+    "ar.husary": { slug: "khalil_al_husary", padded: false },
+    "ar.minshawi": { slug: "siddiq_minshawi", padded: false },
+    "ar.saoodshuraym": { slug: "saud_ash-shuraym", padded: true },
+  };
+  return map[reciterId] ?? { slug: "mishari_al_afasy", padded: false };
 }
 
 function getEveryAyahReciter(reciterId: string): string {

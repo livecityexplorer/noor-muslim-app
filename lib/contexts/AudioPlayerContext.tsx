@@ -1,5 +1,9 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { createAudioPlayer, setAudioModeAsync } from "expo-audio";
+import {
+  useAudioPlayer as useExpoAudioPlayer,
+  useAudioPlayerStatus,
+  setAudioModeAsync,
+} from "expo-audio";
 import React, {
   createContext,
   useCallback,
@@ -8,7 +12,6 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Platform } from "react-native";
 import { getSurahAudioUrl } from "@/lib/services/QuranAPI";
 
 export interface PlayingSurah {
@@ -16,31 +19,20 @@ export interface PlayingSurah {
   surahName: string;
   surahArabicName: string;
   reciterId: string;
-  totalSurahs: number; // 114
+  totalSurahs: number;
 }
 
 export interface AudioPlayerContextType {
-  /** Currently loaded surah info, or null if nothing loaded */
   currentSurah: PlayingSurah | null;
-  /** Whether audio is actively playing */
   isPlaying: boolean;
-  /** Current playback position in seconds */
   currentTime: number;
-  /** Total duration in seconds (0 if unknown) */
   duration: number;
-  /** Whether audio is loading/buffering */
   isLoading: boolean;
-  /** Play a specific surah (replaces current) */
-  playSurah: (surah: PlayingSurah) => Promise<void>;
-  /** Toggle play/pause */
+  playSurah: (surah: PlayingSurah) => void;
   togglePlayPause: () => void;
-  /** Skip to next surah */
   playNext: () => void;
-  /** Go to previous surah */
   playPrev: () => void;
-  /** Seek to a position in seconds */
   seekTo: (seconds: number) => void;
-  /** Stop and unload audio */
   stop: () => void;
 }
 
@@ -50,7 +42,7 @@ const AudioPlayerContext = createContext<AudioPlayerContextType>({
   currentTime: 0,
   duration: 0,
   isLoading: false,
-  playSurah: async () => {},
+  playSurah: () => {},
   togglePlayPause: () => {},
   playNext: () => {},
   playPrev: () => {},
@@ -60,194 +52,135 @@ const AudioPlayerContext = createContext<AudioPlayerContextType>({
 
 export function AudioPlayerProvider({ children }: { children: React.ReactNode }) {
   const [currentSurah, setCurrentSurah] = useState<PlayingSurah | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
-  // We use a ref for the player so we can access it in callbacks without stale closure issues
-  const playerRef = useRef<ReturnType<typeof createAudioPlayer> | null>(null);
+  // Refs to avoid stale closures
   const currentSurahRef = useRef<PlayingSurah | null>(null);
-  const isPlayingRef = useRef(false);
-  const statusIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const hasAutoAdvancedRef = useRef(false);
+  const pendingPlayRef = useRef(false);
 
-  // Keep refs in sync with state
+  // Keep ref in sync with state
   useEffect(() => {
     currentSurahRef.current = currentSurah;
   }, [currentSurah]);
 
-  useEffect(() => {
-    isPlayingRef.current = isPlaying;
-  }, [isPlaying]);
+  // Create a single persistent player instance (empty source initially)
+  // useAudioPlayer manages its lifecycle automatically
+  const player = useExpoAudioPlayer(null);
+  const status = useAudioPlayerStatus(player);
 
-  // Set up audio mode for background playback on mount
+  // Set up background audio mode on mount
   useEffect(() => {
-    setAudioModeAsync({
-      playsInSilentMode: true,
-      // On iOS, this enables background audio (requires UIBackgroundModes: ["audio"] in app.config)
-      // On Android, audio continues in background by default
-    }).catch(() => {});
-
-    return () => {
-      // Cleanup on unmount
-      stopStatusPolling();
-      playerRef.current?.remove();
-      playerRef.current = null;
-    };
+    setAudioModeAsync({ playsInSilentMode: true }).catch(() => {});
   }, []);
 
-  const stopStatusPolling = () => {
-    if (statusIntervalRef.current) {
-      clearInterval(statusIntervalRef.current);
-      statusIntervalRef.current = null;
-    }
-  };
-
-  const startStatusPolling = (player: ReturnType<typeof createAudioPlayer>) => {
-    stopStatusPolling();
-    statusIntervalRef.current = setInterval(() => {
-      try {
-        const time = player.currentTime ?? 0;
-        const dur = player.duration ?? 0;
-        setCurrentTime(time);
-        if (dur > 0) setDuration(dur);
-
-        // Detect when playback finishes (currentTime near duration)
-        if (dur > 0 && time >= dur - 0.5 && isPlayingRef.current) {
-          // Auto-advance to next surah
-          handleAutoAdvance();
-        }
-      } catch {
-        // Player may have been removed
-        stopStatusPolling();
-      }
-    }, 500);
-  };
-
-  const handleAutoAdvance = useCallback(() => {
-    const surah = currentSurahRef.current;
-    if (!surah) return;
-    const nextNum = surah.surahNumber + 1;
-    if (nextNum <= surah.totalSurahs) {
-      const nextSurah: PlayingSurah = {
-        ...surah,
-        surahNumber: nextNum,
-        surahName: `Surah ${nextNum}`,
-        surahArabicName: "",
-      };
-      // Small delay to avoid rapid fire
-      setTimeout(() => {
-        playSurahInternal(nextSurah);
-      }, 800);
-    } else {
-      // Finished all surahs
-      setIsPlaying(false);
-      isPlayingRef.current = false;
-      stopStatusPolling();
-    }
-  }, []);
-
-  const playSurahInternal = useCallback(async (surah: PlayingSurah) => {
-    try {
-      setIsLoading(true);
-      setCurrentTime(0);
-      setDuration(0);
-
-      // Remove existing player
-      stopStatusPolling();
-      if (playerRef.current) {
-        playerRef.current.remove();
-        playerRef.current = null;
-      }
-
-      const url = getSurahAudioUrl(surah.reciterId, surah.surahNumber);
-      const player = createAudioPlayer({ uri: url });
-      playerRef.current = player;
-
-      // Start playing
+  // When status changes to loaded and we have a pending play, start playing
+  useEffect(() => {
+    if (!status) return;
+    // When audio finishes loading (duration becomes available) and we want to play
+    if (pendingPlayRef.current && status.duration > 0 && !status.playing) {
+      pendingPlayRef.current = false;
+      setIsLoading(false);
       player.play();
-      setCurrentSurah(surah);
-      setIsPlaying(true);
-      isPlayingRef.current = true;
-      setIsLoading(false);
-
-      // Start polling for status
-      startStatusPolling(player);
-
-      // Persist last played surah
-      AsyncStorage.setItem("last_played_surah", JSON.stringify(surah)).catch(() => {});
-    } catch (e) {
-      setIsLoading(false);
-      setIsPlaying(false);
-      isPlayingRef.current = false;
     }
-  }, []);
+  }, [status?.duration]);
 
-  const playSurah = useCallback(async (surah: PlayingSurah) => {
-    await playSurahInternal(surah);
-  }, [playSurahInternal]);
+  // Auto-advance to next surah when current one finishes
+  useEffect(() => {
+    if (!status) return;
+    if (status.didJustFinish && currentSurahRef.current && !hasAutoAdvancedRef.current) {
+      hasAutoAdvancedRef.current = true;
+      const surah = currentSurahRef.current;
+      const nextNum = surah.surahNumber + 1;
+      if (nextNum <= surah.totalSurahs) {
+        setTimeout(() => {
+          hasAutoAdvancedRef.current = false;
+          const nextSurah: PlayingSurah = {
+            ...surah,
+            surahNumber: nextNum,
+            surahName: `Surah ${nextNum}`,
+            surahArabicName: "",
+          };
+          loadAndPlay(nextSurah);
+        }, 1000);
+      } else {
+        // Finished all surahs
+        setCurrentSurah(null);
+        hasAutoAdvancedRef.current = false;
+      }
+    }
+  }, [status?.didJustFinish]);
+
+  const loadAndPlay = useCallback((surah: PlayingSurah) => {
+    hasAutoAdvancedRef.current = false;
+    pendingPlayRef.current = true;
+    setIsLoading(true);
+    setCurrentSurah(surah);
+    const url = getSurahAudioUrl(surah.reciterId, surah.surahNumber);
+    // Use player.replace() to load a new source without creating a new player
+    player.replace({ uri: url });
+    // Persist last played surah
+    AsyncStorage.setItem("last_played_surah", JSON.stringify(surah)).catch(() => {});
+  }, [player]);
+
+  const playSurah = useCallback((surah: PlayingSurah) => {
+    loadAndPlay(surah);
+  }, [loadAndPlay]);
 
   const togglePlayPause = useCallback(() => {
-    const player = playerRef.current;
-    if (!player) return;
-    if (isPlayingRef.current) {
+    if (!currentSurahRef.current) return;
+    if (status?.playing) {
       player.pause();
-      setIsPlaying(false);
-      isPlayingRef.current = false;
     } else {
       player.play();
-      setIsPlaying(true);
-      isPlayingRef.current = true;
     }
-  }, []);
+  }, [player, status?.playing]);
 
   const playNext = useCallback(() => {
     const surah = currentSurahRef.current;
     if (!surah) return;
     const nextNum = surah.surahNumber + 1;
     if (nextNum <= surah.totalSurahs) {
-      playSurahInternal({
+      loadAndPlay({
         ...surah,
         surahNumber: nextNum,
         surahName: `Surah ${nextNum}`,
         surahArabicName: "",
       });
     }
-  }, [playSurahInternal]);
+  }, [loadAndPlay]);
 
   const playPrev = useCallback(() => {
     const surah = currentSurahRef.current;
     if (!surah) return;
     const prevNum = surah.surahNumber - 1;
     if (prevNum >= 1) {
-      playSurahInternal({
+      loadAndPlay({
         ...surah,
         surahNumber: prevNum,
         surahName: `Surah ${prevNum}`,
         surahArabicName: "",
       });
     }
-  }, [playSurahInternal]);
+  }, [loadAndPlay]);
 
   const seekTo = useCallback((seconds: number) => {
-    const player = playerRef.current;
-    if (!player) return;
     player.seekTo(seconds);
-    setCurrentTime(seconds);
-  }, []);
+  }, [player]);
 
   const stop = useCallback(() => {
-    stopStatusPolling();
-    if (playerRef.current) {
-      playerRef.current.remove();
-      playerRef.current = null;
-    }
+    player.pause();
+    // Replace with null/empty to unload
+    try { player.replace({ uri: "" }); } catch {}
     setCurrentSurah(null);
-    setIsPlaying(false);
-    isPlayingRef.current = false;
-    setCurrentTime(0);
-    setDuration(0);
-  }, []);
+    setIsLoading(false);
+    pendingPlayRef.current = false;
+    hasAutoAdvancedRef.current = false;
+  }, [player]);
+
+  const isPlaying = status?.playing ?? false;
+  const currentTime = status?.currentTime ?? 0;
+  const duration = status?.duration ?? 0;
 
   return (
     <AudioPlayerContext.Provider

@@ -104,3 +104,6 @@
 - [x] Update Quran surah list: tap surah → plays full surah audio
 - [x] Update Quran detail screen: play button plays full surah, not per-ayah
 - [x] Lock screen / notification media controls (expo-audio background mode)
+
+## Bug Fixes
+- [x] Fix Quran audio not playing (AudioPlayerContext / expo-audio API issue)
