@@ -108,3 +108,9 @@
 ## Bug Fixes
 - [x] Fix Quran audio not playing (AudioPlayerContext / expo-audio API issue)
 - [x] Fix audio stopping when screen is locked or app is in background (iOS UIBackgroundModes + Android foreground service)
+
+## Lock Screen Media Controls
+- [x] Show Now Playing info on iOS lock screen / Control Center (surah name, reciter, artwork)
+- [x] Show playback notification on Android with play/pause/skip controls
+- [x] Interactive lock screen controls: play, pause, previous surah, next surah
+- [x] Update Now Playing metadata when surah changes
