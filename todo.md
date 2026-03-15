@@ -107,3 +107,4 @@
 
 ## Bug Fixes
 - [x] Fix Quran audio not playing (AudioPlayerContext / expo-audio API issue)
+- [x] Fix audio stopping when screen is locked or app is in background (iOS UIBackgroundModes + Android foreground service)

@@ -70,8 +70,16 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   const status = useAudioPlayerStatus(player);
 
   // Set up background audio mode on mount
+  // shouldPlayInBackground: true → audio continues when screen locks or app backgrounds
+  // playsInSilentMode: true → audio plays even when iOS silent/ringer switch is off
+  // interruptionMode: 'duckOthers' → lower other audio (calls, etc.) instead of stopping
   useEffect(() => {
-    setAudioModeAsync({ playsInSilentMode: true }).catch(() => {});
+    setAudioModeAsync({
+      playsInSilentMode: true,
+      shouldPlayInBackground: true,
+      interruptionMode: 'duckOthers',
+      interruptionModeAndroid: 'duckOthers',
+    }).catch(() => {});
   }, []);
 
   // When status changes to loaded and we have a pending play, start playing
