@@ -1,13 +1,16 @@
 import "@/global.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Stack } from "expo-router";
+import { Stack, router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 import { Platform } from "react-native";
 import "@/lib/_core/nativewind-pressable";
 import { ThemeProvider } from "@/lib/theme-provider";
+import { AppSettingsProvider, useAppSettings } from "@/lib/contexts/AppSettingsContext";
+import { QuranProvider } from "@/lib/contexts/QuranContext";
+import { PrayerProvider } from "@/lib/contexts/PrayerContext";
 import {
   SafeAreaFrameContext,
   SafeAreaInsetsContext,
@@ -25,6 +28,40 @@ const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
 export const unstable_settings = {
   anchor: "(tabs)",
 };
+
+function PrayerProviderWrapper({ children }: { children: React.ReactNode }) {
+  const { settings } = useAppSettings();
+  return (
+    <PrayerProvider calculationMethod={settings.calculationMethodId}>
+      {children}
+    </PrayerProvider>
+  );
+}
+
+function OnboardingNavigator() {
+  const { settings, isLoading } = useAppSettings();
+  const hasNavigated = useRef(false);
+
+  useEffect(() => {
+    if (!isLoading && !hasNavigated.current) {
+      hasNavigated.current = true;
+      if (!settings.onboardingCompleted) {
+        router.replace("/onboarding" as any);
+      }
+    }
+  }, [isLoading, settings.onboardingCompleted]);
+
+  return (
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "#0A0A1A" } }}>
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
+      <Stack.Screen name="quran/[surahNumber]" options={{ presentation: "card" }} />
+      <Stack.Screen name="settings" options={{ presentation: "card" }} />
+      <Stack.Screen name="hadith/[collection]" options={{ presentation: "card" }} />
+      <Stack.Screen name="oauth/callback" />
+    </Stack>
+  );
+}
 
 export default function RootLayout() {
   const initialInsets = initialWindowMetrics?.insets ?? DEFAULT_WEB_INSETS;
@@ -82,14 +119,14 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
         <QueryClientProvider client={queryClient}>
-          {/* Default to hiding native headers so raw route segments don't appear (e.g. "(tabs)", "products/[id]"). */}
-          {/* If a screen needs the native header, explicitly enable it and set a human title via Stack.Screen options. */}
-          {/* in order for ios apps tab switching to work properly, use presentation: "fullScreenModal" for login page, whenever you decide to use presentation: "modal*/}
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="oauth/callback" />
-          </Stack>
-          <StatusBar style="auto" />
+          <AppSettingsProvider>
+            <QuranProvider>
+              <PrayerProviderWrapper>
+                <OnboardingNavigator />
+                <StatusBar style="light" />
+              </PrayerProviderWrapper>
+            </QuranProvider>
+          </AppSettingsProvider>
         </QueryClientProvider>
       </trpc.Provider>
     </GestureHandlerRootView>
