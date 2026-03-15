@@ -92,3 +92,15 @@
 - [x] Smooth animations and transitions
 - [x] 16 unit tests passing
 - [x] Final checkpoint and delivery
+
+## Audio Upgrade (Full Surah Playback)
+- [x] Create global AudioPlayerContext for surah-level playback
+- [x] Background audio: continues when screen is locked (playsInSilentMode, background mode)
+- [x] Full surah audio from mp3quran CDN (single file per surah)
+- [x] Auto-advance: play next surah when current finishes
+- [x] Persistent MiniPlayer bar above tab bar (visible on all screens)
+- [x] MiniPlayer: surah name, play/pause, prev/next surah buttons
+- [x] MiniPlayer: tap to expand to full player
+- [x] Update Quran surah list: tap surah → plays full surah audio
+- [x] Update Quran detail screen: play button plays full surah, not per-ayah
+- [x] Lock screen / notification media controls (expo-audio background mode)

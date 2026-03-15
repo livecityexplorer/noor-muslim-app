@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  Platform,
   StyleSheet,
   Text,
   TextInput,
@@ -11,8 +12,11 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import * as Haptics from "expo-haptics";
 import { fetchSurahList, type Surah } from "@/lib/services/QuranAPI";
 import { useQuranContext } from "@/lib/contexts/QuranContext";
+import { useAudioPlayer } from "@/lib/contexts/AudioPlayerContext";
+import { useAppSettings } from "@/lib/contexts/AppSettingsContext";
 
 export default function QuranScreen() {
   const [surahs, setSurahs] = useState<Surah[]>([]);
@@ -21,6 +25,8 @@ export default function QuranScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { lastRead } = useQuranContext();
+  const { currentSurah, isPlaying, playSurah, togglePlayPause } = useAudioPlayer();
+  const { settings } = useAppSettings();
 
   useEffect(() => {
     fetchSurahList()
@@ -52,26 +58,69 @@ export default function QuranScreen() {
     }
   }, [search, surahs]);
 
+  const handlePlaySurah = (item: Surah) => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+    const isCurrentlyPlaying =
+      currentSurah?.surahNumber === item.number && isPlaying;
+    const isCurrentlyLoaded = currentSurah?.surahNumber === item.number;
+
+    if (isCurrentlyLoaded) {
+      togglePlayPause();
+    } else {
+      playSurah({
+        surahNumber: item.number,
+        surahName: item.englishName,
+        surahArabicName: item.name,
+        reciterId: settings.reciterId,
+        totalSurahs: 114,
+      });
+    }
+  };
+
   const renderSurah = ({ item }: { item: Surah }) => {
     const isLastRead = lastRead?.surahNumber === item.number;
+    const isCurrentlyLoaded = currentSurah?.surahNumber === item.number;
+    const isCurrentlyPlaying = isCurrentlyLoaded && isPlaying;
+
     return (
-      <TouchableOpacity
-        style={[styles.surahItem, isLastRead && styles.surahItemHighlighted]}
-        onPress={() => router.push(`/quran/${item.number}` as any)}
-      >
-        <View style={[styles.surahNumber, isLastRead && styles.surahNumberActive]}>
-          <Text style={[styles.surahNumberText, isLastRead && styles.surahNumberTextActive]}>
-            {item.number}
+      <View style={[styles.surahRow, isLastRead && styles.surahRowHighlighted]}>
+        {/* Tap row → navigate to detail */}
+        <TouchableOpacity
+          style={styles.surahRowContent}
+          onPress={() => router.push(`/quran/${item.number}` as any)}
+        >
+          <View style={[styles.surahNumber, isCurrentlyLoaded && styles.surahNumberActive]}>
+            {isCurrentlyPlaying ? (
+              <Text style={styles.playingIndicator}>♪</Text>
+            ) : (
+              <Text style={[styles.surahNumberText, isCurrentlyLoaded && styles.surahNumberTextActive]}>
+                {item.number}
+              </Text>
+            )}
+          </View>
+          <View style={styles.surahInfo}>
+            <Text style={[styles.surahEnglishName, isCurrentlyLoaded && styles.surahEnglishNameActive]}>
+              {item.englishName}
+            </Text>
+            <Text style={styles.surahMeta}>
+              {item.englishNameTranslation} • {item.numberOfAyahs} Ayahs • {item.revelationType}
+            </Text>
+          </View>
+          <Text style={styles.surahArabicName}>{item.name}</Text>
+        </TouchableOpacity>
+
+        {/* Play button on the right */}
+        <TouchableOpacity
+          style={[styles.playBtn, isCurrentlyLoaded && styles.playBtnActive]}
+          onPress={() => handlePlaySurah(item)}
+        >
+          <Text style={[styles.playBtnIcon, isCurrentlyLoaded && styles.playBtnIconActive]}>
+            {isCurrentlyPlaying ? "⏸" : "▶"}
           </Text>
-        </View>
-        <View style={styles.surahInfo}>
-          <Text style={styles.surahEnglishName}>{item.englishName}</Text>
-          <Text style={styles.surahMeta}>
-            {item.englishNameTranslation} • {item.numberOfAyahs} Ayahs • {item.revelationType}
-          </Text>
-        </View>
-        <Text style={styles.surahArabicName}>{item.name}</Text>
-      </TouchableOpacity>
+        </TouchableOpacity>
+      </View>
     );
   };
 
@@ -116,6 +165,20 @@ export default function QuranScreen() {
           </TouchableOpacity>
         )}
       </View>
+
+      {/* Currently playing banner */}
+      {currentSurah && (
+        <TouchableOpacity
+          style={styles.nowPlayingBanner}
+          onPress={() => router.push(`/quran/${currentSurah.surahNumber}` as any)}
+        >
+          <Text style={styles.nowPlayingIcon}>{isPlaying ? "🔊" : "⏸"}</Text>
+          <Text style={styles.nowPlayingText} numberOfLines={1}>
+            {isPlaying ? "Now Playing: " : "Paused: "}
+            {currentSurah.surahName}
+          </Text>
+        </TouchableOpacity>
+      )}
 
       {loading ? (
         <View style={styles.center}>
@@ -206,6 +269,26 @@ const styles = StyleSheet.create({
     padding: 0,
   },
   clearIcon: { color: "#4A4A6A", fontSize: 16 },
+  nowPlayingBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(124, 58, 237, 0.2)",
+    marginHorizontal: 16,
+    marginBottom: 8,
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: "rgba(124, 58, 237, 0.4)",
+    gap: 8,
+  },
+  nowPlayingIcon: { fontSize: 16 },
+  nowPlayingText: {
+    flex: 1,
+    color: "#C4B5FD",
+    fontSize: 13,
+    fontWeight: "600",
+  },
   center: {
     flex: 1,
     alignItems: "center",
@@ -214,19 +297,25 @@ const styles = StyleSheet.create({
   },
   loadingText: { color: "#8B8BB0", fontSize: 14 },
   errorText: { color: "#EF4444", fontSize: 14, textAlign: "center", paddingHorizontal: 32 },
-  listContent: { paddingHorizontal: 16, paddingBottom: 20 },
+  listContent: { paddingHorizontal: 16, paddingBottom: 100 },
   separator: { height: 1, backgroundColor: "#1C1C3A" },
-  surahItem: {
+  surahRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 14,
+    paddingVertical: 4,
     paddingHorizontal: 4,
-    gap: 14,
   },
-  surahItemHighlighted: {
+  surahRowHighlighted: {
     backgroundColor: "rgba(79, 195, 247, 0.05)",
     borderRadius: 12,
     paddingHorizontal: 8,
+  },
+  surahRowContent: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    gap: 14,
   },
   surahNumber: {
     width: 40,
@@ -239,15 +328,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   surahNumberActive: {
-    backgroundColor: "rgba(79, 195, 247, 0.15)",
-    borderColor: "#4FC3F7",
+    backgroundColor: "rgba(124, 58, 237, 0.2)",
+    borderColor: "#7C3AED",
   },
   surahNumberText: {
     fontSize: 13,
     fontWeight: "700",
     color: "#8B8BB0",
   },
-  surahNumberTextActive: { color: "#4FC3F7" },
+  surahNumberTextActive: { color: "#C4B5FD" },
+  playingIndicator: {
+    fontSize: 16,
+    color: "#7C3AED",
+  },
   surahInfo: { flex: 1 },
   surahEnglishName: {
     fontSize: 16,
@@ -255,6 +348,7 @@ const styles = StyleSheet.create({
     color: "#F0F0FF",
     marginBottom: 2,
   },
+  surahEnglishNameActive: { color: "#C4B5FD" },
   surahMeta: {
     fontSize: 12,
     color: "#8B8BB0",
@@ -263,5 +357,26 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: "#F59E0B",
     fontWeight: "500",
+    marginRight: 8,
   },
+  playBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#12122A",
+    borderWidth: 1,
+    borderColor: "#2A2A4A",
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 4,
+  },
+  playBtnActive: {
+    backgroundColor: "rgba(124, 58, 237, 0.25)",
+    borderColor: "#7C3AED",
+  },
+  playBtnIcon: {
+    fontSize: 14,
+    color: "#8B8BB0",
+  },
+  playBtnIconActive: { color: "#C4B5FD" },
 });

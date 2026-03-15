@@ -5,12 +5,14 @@ import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
-import { Platform } from "react-native";
+import { Platform, View } from "react-native";
 import "@/lib/_core/nativewind-pressable";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { AppSettingsProvider, useAppSettings } from "@/lib/contexts/AppSettingsContext";
 import { QuranProvider } from "@/lib/contexts/QuranContext";
 import { PrayerProvider } from "@/lib/contexts/PrayerContext";
+import { AudioPlayerProvider } from "@/lib/contexts/AudioPlayerContext";
+import { MiniPlayer } from "@/components/MiniPlayer";
 import {
   SafeAreaFrameContext,
   SafeAreaInsetsContext,
@@ -52,14 +54,18 @@ function OnboardingNavigator() {
   }, [isLoading, settings.onboardingCompleted]);
 
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "#0A0A1A" } }}>
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
-      <Stack.Screen name="quran/[surahNumber]" options={{ presentation: "card" }} />
-      <Stack.Screen name="settings" options={{ presentation: "card" }} />
-      <Stack.Screen name="hadith/[collection]" options={{ presentation: "card" }} />
-      <Stack.Screen name="oauth/callback" />
-    </Stack>
+    <View style={{ flex: 1 }}>
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "#0A0A1A" } }}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="quran/[surahNumber]" options={{ presentation: "card" }} />
+        <Stack.Screen name="settings" options={{ presentation: "card" }} />
+        <Stack.Screen name="hadith/[collection]" options={{ presentation: "card" }} />
+        <Stack.Screen name="oauth/callback" />
+      </Stack>
+      {/* MiniPlayer floats above tab bar on all screens */}
+      <MiniPlayer />
+    </View>
   );
 }
 
@@ -92,9 +98,7 @@ export default function RootLayout() {
       new QueryClient({
         defaultOptions: {
           queries: {
-            // Disable automatic refetching on window focus for mobile
             refetchOnWindowFocus: false,
-            // Retry failed requests once
             retry: 1,
           },
         },
@@ -102,7 +106,6 @@ export default function RootLayout() {
   );
   const [trpcClient] = useState(() => createTRPCClient());
 
-  // Ensure minimum 8px padding for top and bottom on mobile
   const providerInitialMetrics = useMemo(() => {
     const metrics = initialWindowMetrics ?? { insets: initialInsets, frame: initialFrame };
     return {
@@ -122,8 +125,10 @@ export default function RootLayout() {
           <AppSettingsProvider>
             <QuranProvider>
               <PrayerProviderWrapper>
-                <OnboardingNavigator />
-                <StatusBar style="light" />
+                <AudioPlayerProvider>
+                  <OnboardingNavigator />
+                  <StatusBar style="light" />
+                </AudioPlayerProvider>
               </PrayerProviderWrapper>
             </QuranProvider>
           </AppSettingsProvider>
