@@ -56,6 +56,7 @@ export default function PrayerScreen() {
   const [showMethodPicker, setShowMethodPicker] = useState(false);
   const [showAdhanPicker, setShowAdhanPicker] = useState(false);
   const [adhanPlaying, setAdhanPlaying] = useState(false);
+  const [adhanPreviewDuration, setAdhanPreviewDuration] = useState(0);
   const adhanPlayerRef = useRef<ReturnType<typeof createAudioPlayer> | null>(null);
 
   useEffect(() => {
@@ -146,15 +147,8 @@ export default function PrayerScreen() {
       }
       const adhan = ADHAN_STYLES.find((a) => a.id === adhanId);
       if (!adhan) return;
-      // Use a reliable adhan audio URL
-      // Real Adhan audio from verified CDNs (Surah Al-Fatiha recitations as preview)
-      const adhanUrls: Record<string, string> = {
-        makkah: "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/1.mp3",
-        madinah: "https://cdn.islamic.network/quran/audio-surah/128/ar.abdurrahmaansudais/1.mp3",
-        egypt: "https://cdn.islamic.network/quran/audio-surah/128/ar.husary/1.mp3",
-      };
-      const url = adhanUrls[adhanId] || adhanUrls.makkah;
-      const player = createAudioPlayer({ uri: url });
+      // Use the bundled custom Adhan audio file
+      const player = createAudioPlayer({ uri: require("@/assets/sounds/adhan_custom.mp3") });
       adhanPlayerRef.current = player;
       player.play();
       setAdhanPlaying(true);
@@ -162,7 +156,7 @@ export default function PrayerScreen() {
         player.remove();
         adhanPlayerRef.current = null;
         setAdhanPlaying(false);
-      }, 5000);
+      }, 10000);
     } catch {}
   }, []);
 

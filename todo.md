@@ -159,3 +159,6 @@
 - [x] Lock screen media controls for Quran audio already implemented via setActiveForLockScreen
 - [x] MiniPlayer UI already shows lock screen controls
 - [x] All 28 tests pass
+
+## Bug Fixes
+- [x] Fix Adhan preview in Prayer screen — plays wrong audio (Quran instead of Adhan)
