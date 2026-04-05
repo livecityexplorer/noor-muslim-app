@@ -162,3 +162,8 @@
 
 ## Bug Fixes
 - [x] Fix Adhan preview in Prayer screen — plays wrong audio (Quran instead of Adhan)
+
+## Scanner UI Redesign
+- [x] Redesign Scanner home screen cards with better graphics and compact layout
+- [x] Improve card styling: icons, gradients, spacing
+- [x] Make cards more visually appealing and less elongated
