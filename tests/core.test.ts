@@ -81,8 +81,9 @@ describe("AppSettingsContext", () => {
     }
   });
 
-  it("has 3 adhan styles", () => {
-    expect(ADHAN_STYLES.length).toBe(3);
+  it("has 1 adhan style (custom)", () => {
+    expect(ADHAN_STYLES.length).toBe(1);
+    expect(ADHAN_STYLES[0].id).toBe("custom");
   });
 
   it("has many language options", () => {

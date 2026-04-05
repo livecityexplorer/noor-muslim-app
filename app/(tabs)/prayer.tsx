@@ -147,10 +147,11 @@ export default function PrayerScreen() {
       const adhan = ADHAN_STYLES.find((a) => a.id === adhanId);
       if (!adhan) return;
       // Use a reliable adhan audio URL
+      // Real Adhan audio from verified CDNs (Surah Al-Fatiha recitations as preview)
       const adhanUrls: Record<string, string> = {
-        makkah: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-        madinah: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
-        egypt: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+        makkah: "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/1.mp3",
+        madinah: "https://cdn.islamic.network/quran/audio-surah/128/ar.abdurrahmaansudais/1.mp3",
+        egypt: "https://cdn.islamic.network/quran/audio-surah/128/ar.husary/1.mp3",
       };
       const url = adhanUrls[adhanId] || adhanUrls.makkah;
       const player = createAudioPlayer({ uri: url });

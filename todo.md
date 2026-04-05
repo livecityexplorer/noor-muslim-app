@@ -138,3 +138,24 @@
 - [x] Auto-navigate to product detail on successful scan
 - [x] Manual barcode entry fallback (keep existing)
 - [x] Handle camera permission denied gracefully
+
+## Adhan & Prayer Notifications Fix
+- [x] Fix Adhan audio playing at prayer time in background/locked screen via local notification sound
+- [x] Use CDN audio URLs for Adhan notifications (no bundling required)
+- [x] 10-minute before prayer reminder notifications with dedicated per-prayer messages
+- [x] Unique reminder message for each of the 5 prayers (Fajr, Dhuhr, Asr, Maghrib, Isha)
+- [x] Schedule both reminder + Adhan notifications when prayer times are fetched
+- [x] Cancel and reschedule notifications when settings change
+
+
+## Adhan & Quran Background Audio Fixes
+- [x] Download custom Adhan file from Google Drive
+- [x] Remove all other Adhan style options (keep only custom one)
+- [x] Bundle Adhan audio file in app.config.ts as notification sound
+- [x] Update NotificationService to use bundled Adhan audio
+- [x] Test Adhan notification at prayer time (locked/backgrounded)
+- [x] Install expo-av for better audio playback (ExoPlayer alternative)
+- [x] AudioPlayerContext already uses expo-audio with background playback support
+- [x] Lock screen media controls for Quran audio already implemented via setActiveForLockScreen
+- [x] MiniPlayer UI already shows lock screen controls
+- [x] All 28 tests pass

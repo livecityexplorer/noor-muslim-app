@@ -18,17 +18,18 @@ const env = {
 const config: ExpoConfig = {
   name: env.appName,
   slug: env.appSlug,
-  version: "1.0.0",
+  version: "1.0.1",
   orientation: "portrait",
   icon: "./assets/images/icon.png",
   scheme: env.scheme,
-  userInterfaceStyle: "dark",
+  userInterfaceStyle: "automatic",
   newArchEnabled: true,
+  jsEngine: "hermes",
   ios: {
     supportsTablet: true,
     bundleIdentifier: env.iosBundleId,
     infoPlist: {
-      UIBackgroundModes: ["audio", "fetch", "remote-notification"],
+      UIBackgroundModes: ["audio", "fetch"],
       NSLocationWhenInUseUsageDescription:
         "Noor needs your location to calculate accurate prayer times and Qibla direction.",
       NSLocationAlwaysAndWhenInUseUsageDescription:
@@ -49,13 +50,15 @@ const config: ExpoConfig = {
     edgeToEdgeEnabled: true,
     predictiveBackGestureEnabled: false,
     package: env.androidPackage,
-    permissions: [
+      permissions: [
       "POST_NOTIFICATIONS",
       "ACCESS_FINE_LOCATION",
       "ACCESS_COARSE_LOCATION",
       "VIBRATE",
       "RECEIVE_BOOT_COMPLETED",
       "FOREGROUND_SERVICE",
+      "SCHEDULE_EXACT_ALARM",
+      "USE_EXACT_ALARM",
     ],
     intentFilters: [
       {
@@ -73,6 +76,14 @@ const config: ExpoConfig = {
   },
   plugins: [
     "expo-router",
+    [
+      "expo-notifications",
+      {
+        "sounds": [
+          "./assets/sounds/adhan_custom.mp3"
+        ]
+      }
+    ],
     [
       "expo-camera",
       {

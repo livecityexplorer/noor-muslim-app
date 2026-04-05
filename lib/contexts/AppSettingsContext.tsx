@@ -10,9 +10,7 @@ export const RECITERS = [
 ];
 
 export const ADHAN_STYLES = [
-  { id: "makkah", name: "Makkah Adhan", url: "https://www.islamicfinder.org/prayer-times/adhan/makkah.mp3" },
-  { id: "madinah", name: "Madinah Adhan", url: "https://www.islamicfinder.org/prayer-times/adhan/madinah.mp3" },
-  { id: "egypt", name: "Egyptian Adhan", url: "https://www.islamicfinder.org/prayer-times/adhan/egypt.mp3" },
+  { id: "custom", name: "Adhan", url: "adhan_custom.mp3" },
 ];
 
 export const CALCULATION_METHODS = [
@@ -142,7 +140,7 @@ export interface AppSettings {
 const DEFAULT_SETTINGS: AppSettings = {
   language: "en",
   reciterId: "ar.alafasy",
-  adhanStyleId: "makkah",
+  adhanStyleId: "custom",
   calculationMethodId: 3,
   notifications: {
     fajr: true,
