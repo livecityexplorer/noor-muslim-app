@@ -129,14 +129,9 @@ export default function ScannerHomeScreen() {
               style={({ pressed }) => [pressed && { opacity: 0.75 }]}
               onPress={() => router.push("/scanner/scan")}
             >
-              <LinearGradient colors={["#10B981", "#059669"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.quickActionLarge}>
-                <View style={styles.quickActionContent}>
-                  <Text style={styles.quickActionEmoji}>📱</Text>
-                  <View>
-                    <Text style={styles.quickActionTitle}>Scan Barcode</Text>
-                    <Text style={styles.quickActionSub}>Quick scan</Text>
-                  </View>
-                </View>
+              <LinearGradient colors={["#10B981", "#059669"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.quickActionCard}>
+                <Text style={styles.quickActionEmoji}>📱</Text>
+                <Text style={styles.quickActionTitle}>Scan Barcode</Text>
               </LinearGradient>
             </Pressable>
 
@@ -144,14 +139,9 @@ export default function ScannerHomeScreen() {
               style={({ pressed }) => [pressed && { opacity: 0.75 }]}
               onPress={() => router.push("/scanner/search")}
             >
-              <LinearGradient colors={["#3B82F6", "#1D4ED8"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.quickActionLarge}>
-                <View style={styles.quickActionContent}>
-                  <Text style={styles.quickActionEmoji}>🔍</Text>
-                  <View>
-                    <Text style={styles.quickActionTitle}>Search Products</Text>
-                    <Text style={styles.quickActionSub}>Find by name</Text>
-                  </View>
-                </View>
+              <LinearGradient colors={["#3B82F6", "#1D4ED8"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.quickActionCard}>
+                <Text style={styles.quickActionEmoji}>🔍</Text>
+                <Text style={styles.quickActionTitle}>Search Products</Text>
               </LinearGradient>
             </Pressable>
 
@@ -159,11 +149,9 @@ export default function ScannerHomeScreen() {
               style={({ pressed }) => [pressed && { opacity: 0.75 }]}
               onPress={() => router.push("/scanner/ingredients")}
             >
-              <LinearGradient colors={["#F59E0B", "#D97706"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.quickActionSmall}>
-                <View style={styles.quickActionContentSmall}>
-                  <Text style={styles.quickActionEmoji}>📖</Text>
-                  <Text style={styles.quickActionTitle}>Ingredients</Text>
-                </View>
+              <LinearGradient colors={["#F59E0B", "#D97706"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.quickActionCard}>
+                <Text style={styles.quickActionEmoji}>📖</Text>
+                <Text style={styles.quickActionTitle}>Ingredients</Text>
               </LinearGradient>
             </Pressable>
 
@@ -171,11 +159,9 @@ export default function ScannerHomeScreen() {
               style={({ pressed }) => [pressed && { opacity: 0.75 }]}
               onPress={() => router.push("/scanner/learn")}
             >
-              <LinearGradient colors={["#8B5CF6", "#6D28D9"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.quickActionSmall}>
-                <View style={styles.quickActionContentSmall}>
-                  <Text style={styles.quickActionEmoji}>📚</Text>
-                  <Text style={styles.quickActionTitle}>Learn Halal</Text>
-                </View>
+              <LinearGradient colors={["#8B5CF6", "#6D28D9"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.quickActionCard}>
+                <Text style={styles.quickActionEmoji}>📚</Text>
+                <Text style={styles.quickActionTitle}>Learn Halal</Text>
               </LinearGradient>
             </Pressable>
           </View>
@@ -310,36 +296,35 @@ const styles = StyleSheet.create({
   welcomeBanner: { backgroundColor: "#0D2B1A", borderRadius: 12, padding: 14, borderLeftWidth: 3, borderLeftColor: "#4ADE80" },
   welcomeQuote: { fontSize: 13, color: "#D1FAE5", fontStyle: "italic", lineHeight: 20 },
   welcomeRef: { fontSize: 11, color: "#4ADE80", marginTop: 4, fontWeight: "600" },
-  section: { paddingHorizontal: 20, marginTop: 20 },
-  sectionTitle: { fontSize: 16, fontWeight: "700", color: "#FFFFFF", marginBottom: 10 },
+  section: { paddingHorizontal: 20, marginTop: 18 },
+  sectionTitle: { fontSize: 15, fontWeight: "700", color: "#FFFFFF", marginBottom: 10 },
   sectionRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
   seeAll: { fontSize: 13, color: "#4ADE80", fontWeight: "600" },
   quickActionsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 8 },
-  quickActionLarge: { width: "48%", borderRadius: 14, padding: 14, minHeight: 95, justifyContent: "space-between", borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" },
-  quickActionSmall: { width: "48%", borderRadius: 14, padding: 14, minHeight: 85, justifyContent: "space-between", borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" },
-  quickActionEmoji: { fontSize: 26, marginBottom: 4 },
-  quickActionTitle: { fontSize: 14, fontWeight: "700", color: "#FFFFFF", lineHeight: 18 },
+  quickActionCard: { width: "48%", borderRadius: 14, padding: 16, height: 110, justifyContent: "center", alignItems: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" },
+  quickActionEmoji: { fontSize: 28, marginBottom: 8 },
+  quickActionTitle: { fontSize: 13, fontWeight: "700", color: "#FFFFFF", textAlign: "center", lineHeight: 16 },
   quickActionSub: { fontSize: 10, color: "rgba(255,255,255,0.6)", marginTop: 1 },
-  insightCard: { borderRadius: 14, padding: 14, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },
+  insightCard: { borderRadius: 14, padding: 12, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },
   insightHeader: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
-  insightIcon: { fontSize: 18, marginRight: 8 },
-  insightTitle: { fontSize: 14, fontWeight: "700", color: "#4ADE80" },
-  insightBody: { fontSize: 13, color: "#CBD5E1", lineHeight: 20 },
-  ingredientOfDay: { backgroundColor: "#111827", borderRadius: 14, padding: 14, flexDirection: "row", gap: 12, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },
+  insightIcon: { fontSize: 16, marginRight: 6 },
+  insightTitle: { fontSize: 13, fontWeight: "700", color: "#4ADE80" },
+  insightBody: { fontSize: 12, color: "#CBD5E1", lineHeight: 18 },
+  ingredientOfDay: { backgroundColor: "#111827", borderRadius: 14, padding: 12, flexDirection: "row", gap: 12, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },
   ingredientOfDayLeft: { flex: 1 },
   ingredientOfDayRight: { alignItems: "flex-end", justifyContent: "space-between" },
-  ingredientOfDayName: { fontSize: 16, fontWeight: "700", color: "#FFFFFF", marginBottom: 2 },
-  ingredientOfDayEnum: { fontSize: 11, color: "#94A3B8", marginBottom: 6 },
-  ingredientOfDayDesc: { fontSize: 12, color: "#94A3B8", lineHeight: 18 },
+  ingredientOfDayName: { fontSize: 15, fontWeight: "700", color: "#FFFFFF", marginBottom: 2 },
+  ingredientOfDayEnum: { fontSize: 10, color: "#94A3B8", marginBottom: 4 },
+  ingredientOfDayDesc: { fontSize: 11, color: "#94A3B8", lineHeight: 16 },
   ingredientLearnMore: { fontSize: 11, color: "#4ADE80", marginTop: 8 },
   badge: { borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
   badgeSmall: { paddingHorizontal: 7, paddingVertical: 3 },
   badgeText: { fontSize: 12, fontWeight: "700" },
   badgeTextSmall: { fontSize: 10 },
-  recentCard: { width: 110, backgroundColor: "#111827", borderRadius: 12, padding: 9, marginRight: 10, alignItems: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },
-  recentImagePlaceholder: { width: 60, height: 60, borderRadius: 10, backgroundColor: "#1E293B", alignItems: "center", justifyContent: "center", marginBottom: 8 },
-  recentImageEmoji: { fontSize: 28 },
-  recentName: { fontSize: 11, color: "#E2E8F0", textAlign: "center", marginBottom: 6, lineHeight: 15 },
+  recentCard: { width: 100, backgroundColor: "#111827", borderRadius: 12, padding: 8, marginRight: 10, alignItems: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },
+  recentImagePlaceholder: { width: 50, height: 50, borderRadius: 8, backgroundColor: "#1E293B", alignItems: "center", justifyContent: "center", marginBottom: 6 },
+  recentImageEmoji: { fontSize: 24 },
+  recentName: { fontSize: 10, color: "#E2E8F0", textAlign: "center", marginBottom: 4, lineHeight: 13 },
   emptyState: { backgroundColor: "#111827", borderRadius: 16, padding: 28, alignItems: "center" },
   emptyEmoji: { fontSize: 40, marginBottom: 12 },
   emptyTitle: { fontSize: 16, fontWeight: "700", color: "#FFFFFF", marginBottom: 6 },
@@ -349,9 +334,8 @@ const styles = StyleSheet.create({
   statsGrid: { flexDirection: "row", gap: 10 },
   statCard: { flex: 1, backgroundColor: "#111827", borderRadius: 12, padding: 12, alignItems: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },
   quickActionContent: { flexDirection: "row", alignItems: "center", gap: 10 },
-  quickActionContentSmall: { flexDirection: "column", alignItems: "flex-start", gap: 4 },
-  statNumber: { fontSize: 22, fontWeight: "800", color: "#FFFFFF" },
-  statLabel: { fontSize: 9, color: "#64748B", marginTop: 3, textAlign: "center", lineHeight: 13 },
+  statNumber: { fontSize: 20, fontWeight: "800", color: "#FFFFFF" },
+  statLabel: { fontSize: 9, color: "#64748B", marginTop: 2, textAlign: "center", lineHeight: 12 },
   disclaimer: { marginHorizontal: 20, marginTop: 20, backgroundColor: "#1C1917", borderRadius: 10, padding: 12 },
   disclaimerText: { fontSize: 11, color: "#78716C", lineHeight: 17, textAlign: "center" },
 });
