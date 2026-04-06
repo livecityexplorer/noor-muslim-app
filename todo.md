@@ -167,4 +167,3 @@
 - [x] Redesign Scanner home screen cards with better graphics and compact layout
 - [x] Improve card styling: icons, gradients, spacing
 - [x] Make cards more visually appealing and less elongated
-- [x] Fix card layout — uniform 2x2 grid with consistent sizing (all cards 105px height)
