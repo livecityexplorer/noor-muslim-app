@@ -172,3 +172,8 @@
 - [x] Fix Adhan not playing at prayer times
 - [x] Configure Adhan audio for offline use (bundle locally)
 - [x] Ensure Adhan plays even when app is in background
+
+## Adhan APK Build Issues
+- [x] Fix Adhan audio not playing in APK at prayer times
+- [x] Fix Adhan preview not working in APK build
+- [x] Ensure Adhan audio is properly bundled and accessible offline in APK

@@ -197,7 +197,7 @@ export async function schedulePrayerNotifications(
           title: adhan.title,
           body: adhan.body,
           data: { type: "adhan", prayer: prayer.name, timestamp: prayer.timestamp },
-          sound: "adhan_custom.mp3",
+          sound: Platform.OS === "android" ? "adhan_custom" : "adhan_custom.mp3",
           color: "#F59E0B",
           badge: 1,
           priority: "high",

@@ -148,9 +148,18 @@ export default function PrayerScreen() {
       const adhan = ADHAN_STYLES.find((a) => a.id === adhanId);
       if (!adhan) return;
       // Use the bundled custom Adhan audio file
-      const player = createAudioPlayer({ uri: require("@/assets/sounds/adhan_custom.mp3") });
+      // For APK builds, use the asset URI directly
+      const audioUri = Platform.OS === "web" 
+        ? require("@/assets/sounds/adhan_custom.mp3")
+        : "file:///android_asset/assets/sounds/adhan_custom.mp3";
+      
+      const player = createAudioPlayer({ uri: audioUri });
       adhanPlayerRef.current = player;
-      player.play();
+      
+      // Set audio mode to play in silent mode
+      await setAudioModeAsync({ playsInSilentMode: true });
+      
+      await player.play();
       setAdhanPlaying(true);
       setTimeout(() => {
         player.remove();
