@@ -10,17 +10,21 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Dimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Svg, { Circle, Line, Path, G, Text as SvgText } from "react-native-svg";
+import { ScreenContainer } from "@/components/screen-container";
 
-// Kaaba coordinates
+// Kaaba coordinates (Makkah)
 const KAABA_LAT = 21.4225;
 const KAABA_LNG = 39.8262;
 
-function calculateQiblaDirection(lat: number, lng: number): number {
-  const latRad = (lat * Math.PI) / 180;
-  const lngDiff = ((KAABA_LNG - lng) * Math.PI) / 180;
+/**
+ * Calculate Qibla direction using spherical trigonometry
+ */
+function calculateQiblaDirection(userLat: number, userLng: number): number {
+  const latRad = (userLat * Math.PI) / 180;
+  const lngDiff = ((KAABA_LNG - userLng) * Math.PI) / 180;
   const kaabaLatRad = (KAABA_LAT * Math.PI) / 180;
 
   const y = Math.sin(lngDiff) * Math.cos(kaabaLatRad);
@@ -33,13 +37,16 @@ function calculateQiblaDirection(lat: number, lng: number): number {
   return bearing;
 }
 
-function calculateDistance(lat: number, lng: number): number {
-  const R = 6371;
-  const dLat = ((KAABA_LAT - lat) * Math.PI) / 180;
-  const dLng = ((KAABA_LNG - lng) * Math.PI) / 180;
+/**
+ * Calculate distance to Kaaba in kilometers
+ */
+function calculateDistance(userLat: number, userLng: number): number {
+  const R = 6371; // Earth radius in km
+  const dLat = ((KAABA_LAT - userLat) * Math.PI) / 180;
+  const dLng = ((KAABA_LNG - userLng) * Math.PI) / 180;
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat * Math.PI) / 180) *
+    Math.cos((userLat * Math.PI) / 180) *
       Math.cos((KAABA_LAT * Math.PI) / 180) *
       Math.sin(dLng / 2) *
       Math.sin(dLng / 2);
@@ -47,6 +54,9 @@ function calculateDistance(lat: number, lng: number): number {
   return R * c;
 }
 
+/**
+ * Get magnetic heading from accelerometer data
+ */
 function getMagneticHeading(x: number, y: number): number {
   let heading = Math.atan2(y, x) * (180 / Math.PI);
   heading = (heading + 360) % 360;
@@ -55,404 +65,345 @@ function getMagneticHeading(x: number, y: number): number {
 
 /**
  * Normalize angle difference to shortest path
- * Handles wrapping around 0°/360°
  */
-function normalizeAngleDifference(diff: number): number {
+function normalizeAngleDiff(diff: number): number {
   if (diff > 180) return diff - 360;
   if (diff < -180) return diff + 360;
   return diff;
 }
 
-const COMPASS_SIZE = 280;
-const COMPASS_RADIUS = COMPASS_SIZE / 2 - 20;
-
-function CompassDial({ rotation, qiblaAngle }: { rotation: number; qiblaAngle: number }) {
-  const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
-  const majorTicks = [0, 45, 90, 135, 180, 225, 270, 315];
-  const center = COMPASS_SIZE / 2;
-
-  return (
-    <Svg width={COMPASS_SIZE} height={COMPASS_SIZE}>
-      {/* Outer ring */}
-      <Circle
-        cx={center}
-        cy={center}
-        r={COMPASS_RADIUS + 10}
-        fill="none"
-        stroke="#2A2A4A"
-        strokeWidth={2}
-      />
-      {/* Inner ring */}
-      <Circle
-        cx={center}
-        cy={center}
-        r={COMPASS_RADIUS - 10}
-        fill="rgba(18, 18, 42, 0.8)"
-        stroke="#1C1C3A"
-        strokeWidth={1}
-      />
-
-      {/* Tick marks */}
-      {Array.from({ length: 72 }).map((_, i) => {
-        const angle = (i * 5 - rotation) * (Math.PI / 180);
-        const isMajor = i % 9 === 0;
-        const isCardinal = i % 18 === 0;
-        const tickLen = isCardinal ? 16 : isMajor ? 10 : 6;
-        const r1 = COMPASS_RADIUS - 2;
-        const r2 = r1 - tickLen;
-        const x1 = center + r1 * Math.sin(angle);
-        const y1 = center - r1 * Math.cos(angle);
-        const x2 = center + r2 * Math.sin(angle);
-        const y2 = center - r2 * Math.cos(angle);
-        return (
-          <Line
-            key={i}
-            x1={x1}
-            y1={y1}
-            x2={x2}
-            y2={y2}
-            stroke={isCardinal ? "#F59E0B" : isMajor ? "#4A4A6A" : "#2A2A4A"}
-            strokeWidth={isCardinal ? 2 : 1}
-          />
-        );
-      })}
-
-      {/* Cardinal direction labels */}
-      {majorTicks.map((deg, i) => {
-        const angle = (deg - rotation) * (Math.PI / 180);
-        const r = COMPASS_RADIUS - 30;
-        const x = center + r * Math.sin(angle);
-        const y = center - r * Math.cos(angle);
-        const isNorth = deg === 0;
-        return (
-          <SvgText
-            key={deg}
-            x={x}
-            y={y + 5}
-            textAnchor="middle"
-            fill={isNorth ? "#EF4444" : "#8B8BB0"}
-            fontSize={isNorth ? 14 : 10}
-            fontWeight={isNorth ? "bold" : "normal"}
-          >
-            {directions[i]}
-          </SvgText>
-        );
-      })}
-
-      {/* Qibla direction arrow */}
-      {(() => {
-        const qiblaRad = (qiblaAngle - rotation) * (Math.PI / 180);
-        const arrowLen = COMPASS_RADIUS - 15;
-        const ax = center + arrowLen * Math.sin(qiblaRad);
-        const ay = center - arrowLen * Math.cos(qiblaRad);
-        const tailLen = 20;
-        const tx = center - tailLen * Math.sin(qiblaRad);
-        const ty = center + tailLen * Math.cos(qiblaRad);
-        return (
-          <G>
-            {/* Qibla glow */}
-            <Circle
-              cx={ax}
-              cy={ay}
-              r={8}
-              fill="rgba(34, 197, 94, 0.3)"
-            />
-            {/* Arrow line */}
-            <Line
-              x1={tx}
-              y1={ty}
-              x2={ax}
-              y2={ay}
-              stroke="#22C55E"
-              strokeWidth={3}
-              strokeLinecap="round"
-            />
-            {/* Kaaba icon */}
-            <SvgText
-              x={ax}
-              y={ay + 5}
-              textAnchor="middle"
-              fill="#22C55E"
-              fontSize={14}
-            >
-              🕋
-            </SvgText>
-          </G>
-        );
-      })()}
-
-      {/* Center dot */}
-      <Circle cx={center} cy={center} r={8} fill="#7C3AED" />
-      <Circle cx={center} cy={center} r={4} fill="#F0F0FF" />
-
-      {/* North indicator (fixed) */}
-      <Path
-        d={`M ${center} ${center - COMPASS_RADIUS + 5} L ${center - 6} ${center - COMPASS_RADIUS + 18} L ${center + 6} ${center - COMPASS_RADIUS + 18} Z`}
-        fill="#EF4444"
-      />
-    </Svg>
-  );
-}
-
 export default function QiblaScreen() {
-  const [location, setLocationState] = useState<{ lat: number; lng: number } | null>(null);
+  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [heading, setHeading] = useState(0);
   const [qiblaAngle, setQiblaAngle] = useState(0);
   const [distance, setDistance] = useState(0);
-  const [accuracy, setAccuracy] = useState<"low" | "medium" | "high">("low");
+  const [accuracy, setAccuracy] = useState<"high" | "medium" | "low">("low");
   const [hasPermission, setHasPermission] = useState(false);
   const [sensorAvailable, setSensorAvailable] = useState(true);
   const [calibrating, setCalibrating] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Animation values
   const rotationAnim = useRef(new Animated.Value(0)).current;
-  const lastHeading = useRef(0);
-  const animationRef = useRef<any>(null);
+  const lastHeadingRef = useRef(0);
+  const subscriptionRef = useRef<any>(null);
 
+  /**
+   * Initialize location and sensors
+   */
   useEffect(() => {
-    (async () => {
-      // Check sensor availability
-      const available = await Magnetometer.isAvailableAsync();
-      setSensorAvailable(available);
+    const initializeApp = async () => {
+      try {
+        // Check magnetometer availability
+        const available = await Magnetometer.isAvailableAsync();
+        setSensorAvailable(available);
 
-      // Get location
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status === "granted") {
-        setHasPermission(true);
-        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-        const lat = loc.coords.latitude;
-        const lng = loc.coords.longitude;
-        setLocationState({ lat, lng });
-        const qibla = calculateQiblaDirection(lat, lng);
-        const dist = calculateDistance(lat, lng);
-        setQiblaAngle(qibla);
-        setDistance(dist);
-      }
-    })();
-  }, []);
-
-  useEffect(() => {
-    if (!sensorAvailable) return;
-    // Faster update interval (50ms instead of 100ms) for responsive compass
-    Magnetometer.setUpdateInterval(50);
-    
-    const subscription = Magnetometer.addListener(({ x, y, z }) => {
-      const mag = Math.sqrt(x * x + y * y + z * z);
-      // Determine accuracy based on field strength
-      if (mag > 20 && mag < 65) {
-        setAccuracy("high");
-      } else if (mag > 10) {
-        setAccuracy("medium");
-      } else {
-        setAccuracy("low");
-      }
-
-      const newHeading = getMagneticHeading(x, y);
-      const diff = newHeading - lastHeading.current;
-      
-      // Normalize angle difference to handle wrapping (e.g., 359° to 1° = 2° change, not 358°)
-      const normalizedDiff = normalizeAngleDifference(diff);
-      
-      // Update on smaller changes (>0.3°) for smoother tracking instead of >1°
-      if (Math.abs(normalizedDiff) > 0.3) {
-        lastHeading.current = newHeading;
-        setHeading(newHeading);
-        
-        // Cancel previous animation if still running
-        if (animationRef.current) {
-          animationRef.current.stop();
+        // Request location permission
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === "granted") {
+          setHasPermission(true);
+          const loc = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+          });
+          const { latitude, longitude } = loc.coords;
+          setLocation({ lat: latitude, lng: longitude });
+          
+          // Calculate Qibla direction
+          const qibla = calculateQiblaDirection(latitude, longitude);
+          setQiblaAngle(qibla);
+          
+          // Calculate distance
+          const dist = calculateDistance(latitude, longitude);
+          setDistance(dist);
         }
-        
-        // Faster animation (40ms) for responsive feel instead of 100ms
-        animationRef.current = Animated.timing(rotationAnim, {
-          toValue: newHeading,
-          duration: 40,
-          easing: Easing.linear,
-          useNativeDriver: true,
-        });
-        animationRef.current.start();
-      }
-    });
-    
-    return () => {
-      subscription.remove();
-      if (animationRef.current) {
-        animationRef.current.stop();
+      } catch (error) {
+        console.error("Error initializing Qibla:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
-  }, [sensorAvailable, rotationAnim]);
+
+    initializeApp();
+  }, []);
+
+  /**
+   * Subscribe to magnetometer updates
+   */
+  useEffect(() => {
+    if (!sensorAvailable || !hasPermission) return;
+
+    // Set update interval to 50ms for responsive compass
+    Magnetometer.setUpdateInterval(50);
+
+    // Subscribe to magnetometer data
+    subscriptionRef.current = Magnetometer.addListener(({ x, y, z }) => {
+      try {
+        // Calculate magnetic field strength for accuracy assessment
+        const mag = Math.sqrt(x * x + y * y + z * z);
+        
+        // Determine accuracy based on field strength
+        if (mag > 20 && mag < 65) {
+          setAccuracy("high");
+        } else if (mag > 10) {
+          setAccuracy("medium");
+        } else {
+          setAccuracy("low");
+        }
+
+        // Calculate heading from magnetometer data
+        const newHeading = getMagneticHeading(x, y);
+        const diff = newHeading - lastHeadingRef.current;
+        const normalizedDiff = normalizeAngleDiff(diff);
+
+        // Update heading if change is significant (>0.5°)
+        if (Math.abs(normalizedDiff) > 0.5) {
+          lastHeadingRef.current = newHeading;
+          setHeading(newHeading);
+
+          // Animate compass rotation
+          Animated.timing(rotationAnim, {
+            toValue: newHeading,
+            duration: 50,
+            easing: Easing.linear,
+            useNativeDriver: true,
+          }).start();
+        }
+      } catch (error) {
+        console.error("Error processing magnetometer data:", error);
+      }
+    });
+
+    return () => {
+      if (subscriptionRef.current) {
+        subscriptionRef.current.remove();
+      }
+    };
+  }, [sensorAvailable, hasPermission, rotationAnim]);
 
   const handleCalibrate = useCallback(() => {
     setCalibrating(true);
     setTimeout(() => setCalibrating(false), 3000);
   }, []);
 
-  const accuracyColor = accuracy === "high" ? "#22C55E" : accuracy === "medium" ? "#F59E0B" : "#EF4444";
-  const accuracyLabel = accuracy === "high" ? "High Accuracy" : accuracy === "medium" ? "Medium Accuracy" : "Low Accuracy — Calibrate";
+  const handleRetry = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === "granted") {
+        setHasPermission(true);
+        const loc = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        const { latitude, longitude } = loc.coords;
+        setLocation({ lat: latitude, lng: longitude });
+        const qibla = calculateQiblaDirection(latitude, longitude);
+        setQiblaAngle(qibla);
+        const dist = calculateDistance(latitude, longitude);
+        setDistance(dist);
+      }
+    } catch (error) {
+      console.error("Error retrying:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const accuracyColor =
+    accuracy === "high" ? "#22C55E" : accuracy === "medium" ? "#F59E0B" : "#EF4444";
+  const accuracyLabel =
+    accuracy === "high"
+      ? "High Accuracy"
+      : accuracy === "medium"
+        ? "Medium Accuracy"
+        : "Low Accuracy";
+
+  const deviationAngle = Math.abs(qiblaAngle - heading);
+  const shortestDeviation = deviationAngle > 180 ? 360 - deviationAngle : deviationAngle;
+  const isAligned = shortestDeviation < 5;
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <LinearGradient
-        colors={["#001A0A", "#0A1A0A", "#0A0A1A"]}
-        style={styles.header}
-      >
-        <View style={styles.decorCircle} />
-        <SafeAreaView edges={["top"]}>
-          <Text style={styles.headerTitle}>Qibla Direction</Text>
-          <Text style={styles.headerSubtitle}>Direction of the Kaaba in Makkah</Text>
-        </SafeAreaView>
-      </LinearGradient>
+    <ScreenContainer className="bg-background">
+      <View style={styles.container}>
+        {/* Header */}
+        <LinearGradient
+          colors={["rgba(34, 197, 94, 0.1)", "rgba(34, 197, 94, 0.05)", "transparent"]}
+          style={styles.header}
+        >
+          <Text style={styles.headerTitle}>🕌 Qibla Direction</Text>
+          <Text style={styles.headerSubtitle}>Find the direction to Makkah</Text>
+        </LinearGradient>
 
-      <View style={styles.content}>
-        {!hasPermission ? (
-          <View style={styles.permissionContainer}>
+        {/* Content */}
+        {isLoading ? (
+          <View style={styles.centerContent}>
+            <Text style={styles.loadingText}>Loading compass...</Text>
+          </View>
+        ) : !hasPermission ? (
+          <View style={styles.centerContent}>
             <Text style={styles.permissionIcon}>📍</Text>
             <Text style={styles.permissionTitle}>Location Required</Text>
             <Text style={styles.permissionText}>
-              Qibla direction requires your location to calculate the direction of the Kaaba.
+              We need your location to calculate the Qibla direction.
             </Text>
-            <TouchableOpacity
-              style={styles.permissionBtn}
-              onPress={async () => {
-                const { status } = await Location.requestForegroundPermissionsAsync();
-                if (status === "granted") {
-                  setHasPermission(true);
-                  const loc = await Location.getCurrentPositionAsync({});
-                  const lat = loc.coords.latitude;
-                  const lng = loc.coords.longitude;
-                  setLocationState({ lat, lng });
-                  setQiblaAngle(calculateQiblaDirection(lat, lng));
-                  setDistance(calculateDistance(lat, lng));
-                }
-              }}
-            >
-              <Text style={styles.permissionBtnText}>Grant Location Access</Text>
+            <TouchableOpacity style={styles.primaryBtn} onPress={handleRetry}>
+              <Text style={styles.primaryBtnText}>Grant Location Access</Text>
             </TouchableOpacity>
           </View>
         ) : (
-          <>
-            {/* Compass */}
-            <View style={styles.compassContainer}>
-              {/* Outer glow ring */}
+          <View style={styles.content}>
+            {/* Compass Visualization */}
+            <View style={styles.compassWrapper}>
+              {/* Outer glow */}
               <View style={styles.compassGlow} />
-              <Animated.View
-                style={[
-                  styles.animatedCompass,
-                  {
-                    transform: [
-                      {
-                        rotate: rotationAnim.interpolate({
-                          inputRange: [0, 360],
-                          outputRange: ["0deg", "360deg"],
-                        }),
-                      },
-                    ],
-                  },
-                ]}
-              >
-                <CompassDial rotation={heading} qiblaAngle={qiblaAngle} />
-              </Animated.View>
+              
+              {/* Compass background */}
+              <View style={styles.compassBg}>
+                {/* Cardinal directions */}
+                <Text style={[styles.cardinalLabel, styles.north]}>N</Text>
+                <Text style={[styles.cardinalLabel, styles.east]}>E</Text>
+                <Text style={[styles.cardinalLabel, styles.south]}>S</Text>
+                <Text style={[styles.cardinalLabel, styles.west]}>W</Text>
+
+                {/* Animated Qibla arrow */}
+                <Animated.View
+                  style={[
+                    styles.qiblaArrow,
+                    {
+                      transform: [
+                        {
+                          rotate: rotationAnim.interpolate({
+                            inputRange: [0, 360],
+                            outputRange: ["0deg", "360deg"],
+                          }),
+                        },
+                      ],
+                    },
+                  ]}
+                >
+                  <View style={styles.arrowHead}>
+                    <Text style={styles.kabaIcon}>🕋</Text>
+                  </View>
+                </Animated.View>
+
+                {/* Center dot */}
+                <View style={styles.centerDot} />
+              </View>
+
+              {/* Alignment indicator */}
+              <View style={styles.alignmentIndicator}>
+                <Text style={[styles.alignmentText, { color: isAligned ? "#22C55E" : "#F59E0B" }]}>
+                  {isAligned ? "✓ Aligned" : `${Math.round(shortestDeviation)}° off`}
+                </Text>
+              </View>
             </View>
 
             {/* Info Cards */}
-            <View style={styles.infoRow}>
+            <View style={styles.infoGrid}>
               <View style={styles.infoCard}>
-                <Text style={styles.infoLabel}>Qibla Direction</Text>
+                <Text style={styles.infoLabel}>Qibla Angle</Text>
                 <Text style={styles.infoValue}>{Math.round(qiblaAngle)}°</Text>
               </View>
               <View style={styles.infoCard}>
-                <Text style={styles.infoLabel}>Distance to Makkah</Text>
+                <Text style={styles.infoLabel}>Distance</Text>
                 <Text style={styles.infoValue}>
                   {distance > 1000 ? `${(distance / 1000).toFixed(1)}k` : Math.round(distance)} km
                 </Text>
               </View>
+              <View style={styles.infoCard}>
+                <Text style={styles.infoLabel}>Your Heading</Text>
+                <Text style={styles.infoValue}>{Math.round(heading)}°</Text>
+              </View>
+              <View style={styles.infoCard}>
+                <Text style={styles.infoLabel}>Accuracy</Text>
+                <Text style={[styles.infoValue, { color: accuracyColor }]}>
+                  {accuracy === "high" ? "High" : accuracy === "medium" ? "Med" : "Low"}
+                </Text>
+              </View>
             </View>
 
-            {/* Accuracy indicator */}
+            {/* Accuracy Badge */}
             <View style={[styles.accuracyBadge, { borderColor: accuracyColor }]}>
               <View style={[styles.accuracyDot, { backgroundColor: accuracyColor }]} />
-              <Text style={[styles.accuracyText, { color: accuracyColor }]}>{accuracyLabel}</Text>
+              <Text style={[styles.accuracyBadgeText, { color: accuracyColor }]}>
+                {accuracyLabel}
+              </Text>
             </View>
 
-            {/* Calibration */}
+            {/* Calibrate Button */}
             {!sensorAvailable ? (
-              <View style={styles.noSensorCard}>
-                <Text style={styles.noSensorText}>
-                  ⚠️ Magnetometer not available on this device. Qibla direction shown based on GPS only.
+              <View style={styles.warningCard}>
+                <Text style={styles.warningText}>
+                  ⚠️ Magnetometer not available. Qibla direction shown based on GPS only.
                 </Text>
               </View>
             ) : (
               <TouchableOpacity
-                style={styles.calibrateBtn}
+                style={[styles.secondaryBtn, calibrating && styles.calibratingBtn]}
                 onPress={handleCalibrate}
               >
-                <Text style={styles.calibrateBtnText}>
-                  {calibrating ? "Calibrating... Move in figure-8 pattern" : "🔄 Calibrate Compass"}
+                <Text style={styles.secondaryBtnText}>
+                  {calibrating ? "🔄 Calibrating..." : "🔄 Calibrate Compass"}
                 </Text>
               </TouchableOpacity>
             )}
 
             {/* Instructions */}
             <View style={styles.instructionsCard}>
-              <Text style={styles.instructionsTitle}>How to use</Text>
+              <Text style={styles.instructionsTitle}>How to Use</Text>
               <Text style={styles.instructionsText}>
-                Hold your phone flat and level. The green arrow points toward the Kaaba in Makkah. Rotate your body until the arrow points straight up on the screen — that is your Qibla direction.
-              </Text>
-              <Text style={styles.instructionsCalib}>
-                For best accuracy: move your phone in a figure-8 pattern to calibrate the compass.
+                1. Hold your phone flat and level{"\n"}
+                2. Rotate until the Kaaba icon (🕋) points upward{"\n"}
+                3. That direction is your Qibla
               </Text>
             </View>
-          </>
+          </View>
         )}
       </View>
-    </View>
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#0A0A1A" },
+  container: {
+    flex: 1,
+    backgroundColor: "#0A0A1A",
+  },
   header: {
     paddingHorizontal: 20,
-    paddingBottom: 20,
-    overflow: "hidden",
-  },
-  decorCircle: {
-    position: "absolute",
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    borderWidth: 1,
-    borderColor: "rgba(34, 197, 94, 0.15)",
-    top: -60,
-    right: -40,
+    paddingVertical: 16,
+    marginBottom: 16,
   },
   headerTitle: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: "700",
     color: "#F0F0FF",
-    paddingTop: 8,
   },
   headerSubtitle: {
     fontSize: 13,
     color: "#8B8BB0",
-    marginTop: 2,
+    marginTop: 4,
   },
   content: {
     flex: 1,
-    alignItems: "center",
     paddingHorizontal: 20,
-    paddingTop: 20,
     gap: 16,
   },
-  permissionContainer: {
+  centerContent: {
     flex: 1,
-    alignItems: "center",
     justifyContent: "center",
-    gap: 16,
+    alignItems: "center",
     paddingHorizontal: 32,
+    gap: 16,
   },
-  permissionIcon: { fontSize: 60 },
+  loadingText: {
+    fontSize: 16,
+    color: "#8B8BB0",
+  },
+  permissionIcon: {
+    fontSize: 56,
+  },
   permissionTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: "700",
     color: "#F0F0FF",
   },
@@ -462,48 +413,121 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 22,
   },
-  permissionBtn: {
+  primaryBtn: {
     backgroundColor: "rgba(34, 197, 94, 0.2)",
-    borderRadius: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 32,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
     borderWidth: 1,
     borderColor: "#22C55E",
+    marginTop: 8,
   },
-  permissionBtnText: {
+  primaryBtnText: {
     color: "#22C55E",
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "600",
+    textAlign: "center",
   },
-  compassContainer: {
-    width: COMPASS_SIZE + 20,
-    height: COMPASS_SIZE + 20,
+  compassWrapper: {
     alignItems: "center",
     justifyContent: "center",
+    marginVertical: 16,
   },
   compassGlow: {
     position: "absolute",
-    width: COMPASS_SIZE + 20,
-    height: COMPASS_SIZE + 20,
-    borderRadius: (COMPASS_SIZE + 20) / 2,
-    backgroundColor: "rgba(34, 197, 94, 0.05)",
+    width: 260,
+    height: 260,
+    borderRadius: 130,
+    backgroundColor: "rgba(34, 197, 94, 0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(34, 197, 94, 0.15)",
+  },
+  compassBg: {
+    width: 240,
+    height: 240,
+    borderRadius: 120,
+    backgroundColor: "rgba(18, 18, 42, 0.9)",
+    borderWidth: 2,
+    borderColor: "#2A2A4A",
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  cardinalLabel: {
+    position: "absolute",
+    fontSize: 16,
+    fontWeight: "700",
+    width: 30,
+    textAlign: "center",
+  },
+  north: {
+    top: 12,
+    color: "#EF4444",
+  },
+  east: {
+    right: 12,
+    color: "#8B8BB0",
+  },
+  south: {
+    bottom: 12,
+    color: "#8B8BB0",
+  },
+  west: {
+    left: 12,
+    color: "#8B8BB0",
+  },
+  qiblaArrow: {
+    position: "absolute",
+    width: 60,
+    height: 120,
+    alignItems: "center",
+  },
+  arrowHead: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "rgba(34, 197, 94, 0.2)",
+    borderWidth: 2,
+    borderColor: "#22C55E",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  kabaIcon: {
+    fontSize: 28,
+  },
+  centerDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: "#7C3AED",
+    borderWidth: 2,
+    borderColor: "#F0F0FF",
+  },
+  alignmentIndicator: {
+    marginTop: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: "rgba(34, 197, 94, 0.1)",
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: "rgba(34, 197, 94, 0.2)",
   },
-  animatedCompass: {
-    width: COMPASS_SIZE,
-    height: COMPASS_SIZE,
+  alignmentText: {
+    fontSize: 13,
+    fontWeight: "600",
+    textAlign: "center",
   },
-  infoRow: {
+  infoGrid: {
     flexDirection: "row",
-    gap: 12,
-    width: "100%",
+    flexWrap: "wrap",
+    gap: 8,
   },
   infoCard: {
     flex: 1,
+    minWidth: "48%",
     backgroundColor: "#12122A",
-    borderRadius: 14,
-    padding: 14,
+    borderRadius: 12,
+    padding: 12,
     alignItems: "center",
     borderWidth: 1,
     borderColor: "#2A2A4A",
@@ -512,11 +536,11 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: "#8B8BB0",
     textTransform: "uppercase",
-    letterSpacing: 1,
+    letterSpacing: 0.5,
     marginBottom: 4,
   },
   infoValue: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: "800",
     color: "#22C55E",
   },
@@ -526,54 +550,58 @@ const styles = StyleSheet.create({
     gap: 8,
     backgroundColor: "#12122A",
     borderRadius: 20,
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 16,
     borderWidth: 1,
+    alignSelf: "center",
   },
   accuracyDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
   },
-  accuracyText: {
+  accuracyBadgeText: {
     fontSize: 13,
     fontWeight: "600",
   },
-  noSensorCard: {
-    backgroundColor: "rgba(245, 158, 11, 0.1)",
+  secondaryBtn: {
+    backgroundColor: "rgba(34, 197, 94, 0.1)",
     borderRadius: 12,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: "rgba(245, 158, 11, 0.3)",
-    width: "100%",
-  },
-  noSensorText: {
-    color: "#F59E0B",
-    fontSize: 13,
-    lineHeight: 20,
-    textAlign: "center",
-  },
-  calibrateBtn: {
-    backgroundColor: "rgba(34, 197, 94, 0.15)",
-    borderRadius: 14,
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderWidth: 1,
     borderColor: "rgba(34, 197, 94, 0.3)",
   },
-  calibrateBtnText: {
+  calibratingBtn: {
+    opacity: 0.6,
+  },
+  secondaryBtnText: {
     color: "#22C55E",
     fontSize: 14,
     fontWeight: "600",
+    textAlign: "center",
+  },
+  warningCard: {
+    backgroundColor: "rgba(245, 158, 11, 0.1)",
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "rgba(245, 158, 11, 0.3)",
+  },
+  warningText: {
+    color: "#F59E0B",
+    fontSize: 13,
+    lineHeight: 20,
+    textAlign: "center",
   },
   instructionsCard: {
     backgroundColor: "#12122A",
-    borderRadius: 14,
-    padding: 16,
+    borderRadius: 12,
+    padding: 14,
     borderWidth: 1,
     borderColor: "#2A2A4A",
-    width: "100%",
     gap: 8,
+    marginBottom: 16,
   },
   instructionsTitle: {
     fontSize: 14,
@@ -584,11 +612,5 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#8B8BB0",
     lineHeight: 20,
-  },
-  instructionsCalib: {
-    fontSize: 12,
-    color: "#4A4A6A",
-    lineHeight: 18,
-    fontStyle: "italic",
   },
 });
