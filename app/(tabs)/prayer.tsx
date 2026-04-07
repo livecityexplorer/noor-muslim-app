@@ -148,18 +148,18 @@ export default function PrayerScreen() {
       const adhan = ADHAN_STYLES.find((a) => a.id === adhanId);
       if (!adhan) return;
       // Use the bundled custom Adhan audio file
-      // For APK builds, use the asset URI directly
-      const audioUri = Platform.OS === "web" 
-        ? require("@/assets/sounds/adhan_custom.mp3")
-        : "file:///android_asset/assets/sounds/adhan_custom.mp3";
+      // Use require() for all platforms to ensure proper bundling
+      const audioUri = require("@/assets/sounds/adhan_custom.mp3");
       
-      const player = createAudioPlayer({ uri: audioUri });
-      adhanPlayerRef.current = player;
+      console.log("[Adhan Preview] Audio URI:", audioUri);
       
       // Set audio mode FIRST to ensure it plays in silent mode with max volume
       await setAudioModeAsync({
         playsInSilentMode: true,
       });
+      
+      const player = createAudioPlayer({ uri: audioUri });
+      adhanPlayerRef.current = player;
       
       // Set volume to maximum
       player.volume = 1.0;
@@ -492,6 +492,25 @@ export default function PrayerScreen() {
                   )}
                 </TouchableOpacity>
               ))}
+              {adhanPlaying && (
+                <TouchableOpacity
+                  style={styles.stopAdhanBtn}
+                  onPress={() => {
+                    if (adhanPlayerRef.current) {
+                      try {
+                        adhanPlayerRef.current.pause();
+                        adhanPlayerRef.current.remove();
+                      } catch (e) {
+                        console.warn("Error stopping Adhan:", e);
+                      }
+                      adhanPlayerRef.current = null;
+                    }
+                    setAdhanPlaying(false);
+                  }}
+                >
+                  <Text style={styles.stopAdhanBtnText}>⏹ Stop Adhan</Text>
+                </TouchableOpacity>
+              )}
             </View>
           )}
         </View>
@@ -789,4 +808,19 @@ const styles = StyleSheet.create({
   pickerItemText: { color: "#F0F0FF", fontSize: 14 },
   pickerItemTextActive: { color: "#F59E0B", fontWeight: "600" },
   playingIndicator: { color: "#F59E0B", fontSize: 12 },
+  stopAdhanBtn: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: "rgba(239, 68, 68, 0.2)",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#EF4444",
+    alignItems: "center",
+    marginTop: 8,
+  },
+  stopAdhanBtnText: {
+    color: "#EF4444",
+    fontSize: 14,
+    fontWeight: "600",
+  },
 });
