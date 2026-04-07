@@ -103,7 +103,8 @@ async function setupAndroidChannels(): Promise<void> {
     enableLights: true,
     enableVibrate: true,
     lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
-    bypassDnd: false,
+    bypassDnd: true,
+    sound: "adhan_custom.mp3",
   });
 
   // Reminder channel — HIGH importance, 10 min before prayer
@@ -196,8 +197,11 @@ export async function schedulePrayerNotifications(
           title: adhan.title,
           body: adhan.body,
           data: { type: "adhan", prayer: prayer.name, timestamp: prayer.timestamp },
-          sound: "default",
+          sound: "adhan_custom.mp3",
           color: "#F59E0B",
+          badge: 1,
+          priority: "high",
+          vibrate: [0, 500, 200, 500, 200, 500],
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DATE,

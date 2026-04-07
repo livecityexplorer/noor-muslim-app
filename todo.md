@@ -168,3 +168,7 @@
 - [x] Improve card styling: icons, gradients, spacing
 - [x] Make cards more visually appealing and less elongated
 - [x] Fix card layout — horizontal design matching Learn Halal cards (icon + title + description + chevron)
+## Adhan Playback Issues
+- [x] Fix Adhan not playing at prayer times
+- [x] Configure Adhan audio for offline use (bundle locally)
+- [x] Ensure Adhan plays even when app is in background
