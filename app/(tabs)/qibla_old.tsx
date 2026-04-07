@@ -53,16 +53,6 @@ function getMagneticHeading(x: number, y: number): number {
   return heading;
 }
 
-/**
- * Normalize angle difference to shortest path
- * Handles wrapping around 0°/360°
- */
-function normalizeAngleDifference(diff: number): number {
-  if (diff > 180) return diff - 360;
-  if (diff < -180) return diff + 360;
-  return diff;
-}
-
 const COMPASS_SIZE = 280;
 const COMPASS_RADIUS = COMPASS_SIZE / 2 - 20;
 
@@ -205,7 +195,6 @@ export default function QiblaScreen() {
   const [calibrating, setCalibrating] = useState(false);
   const rotationAnim = useRef(new Animated.Value(0)).current;
   const lastHeading = useRef(0);
-  const animationRef = useRef<any>(null);
 
   useEffect(() => {
     (async () => {
@@ -231,9 +220,7 @@ export default function QiblaScreen() {
 
   useEffect(() => {
     if (!sensorAvailable) return;
-    // Faster update interval (50ms instead of 100ms) for responsive compass
-    Magnetometer.setUpdateInterval(50);
-    
+    Magnetometer.setUpdateInterval(100);
     const subscription = Magnetometer.addListener(({ x, y, z }) => {
       const mag = Math.sqrt(x * x + y * y + z * z);
       // Determine accuracy based on field strength
@@ -247,37 +234,19 @@ export default function QiblaScreen() {
 
       const newHeading = getMagneticHeading(x, y);
       const diff = newHeading - lastHeading.current;
-      
-      // Normalize angle difference to handle wrapping (e.g., 359° to 1° = 2° change, not 358°)
-      const normalizedDiff = normalizeAngleDifference(diff);
-      
-      // Update on smaller changes (>0.3°) for smoother tracking instead of >1°
-      if (Math.abs(normalizedDiff) > 0.3) {
+      // Smooth out small jitters
+      if (Math.abs(diff) > 1) {
         lastHeading.current = newHeading;
         setHeading(newHeading);
-        
-        // Cancel previous animation if still running
-        if (animationRef.current) {
-          animationRef.current.stop();
-        }
-        
-        // Faster animation (40ms) for responsive feel instead of 100ms
-        animationRef.current = Animated.timing(rotationAnim, {
+        Animated.timing(rotationAnim, {
           toValue: newHeading,
-          duration: 40,
-          easing: Easing.linear,
+          duration: 100,
+          easing: Easing.out(Easing.quad),
           useNativeDriver: true,
-        });
-        animationRef.current.start();
+        }).start();
       }
     });
-    
-    return () => {
-      subscription.remove();
-      if (animationRef.current) {
-        animationRef.current.stop();
-      }
-    };
+    return () => subscription.remove();
   }, [sensorAvailable, rotationAnim]);
 
   const handleCalibrate = useCallback(() => {
@@ -334,23 +303,7 @@ export default function QiblaScreen() {
             <View style={styles.compassContainer}>
               {/* Outer glow ring */}
               <View style={styles.compassGlow} />
-              <Animated.View
-                style={[
-                  styles.animatedCompass,
-                  {
-                    transform: [
-                      {
-                        rotate: rotationAnim.interpolate({
-                          inputRange: [0, 360],
-                          outputRange: ["0deg", "360deg"],
-                        }),
-                      },
-                    ],
-                  },
-                ]}
-              >
-                <CompassDial rotation={heading} qiblaAngle={qiblaAngle} />
-              </Animated.View>
+              <CompassDial rotation={heading} qiblaAngle={qiblaAngle} />
             </View>
 
             {/* Info Cards */}
@@ -489,10 +442,6 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(34, 197, 94, 0.05)",
     borderWidth: 1,
     borderColor: "rgba(34, 197, 94, 0.2)",
-  },
-  animatedCompass: {
-    width: COMPASS_SIZE,
-    height: COMPASS_SIZE,
   },
   infoRow: {
     flexDirection: "row",
