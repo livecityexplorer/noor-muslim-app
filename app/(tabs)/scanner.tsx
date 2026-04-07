@@ -124,47 +124,81 @@ export default function ScannerHomeScreen() {
         {/* Quick Actions */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <View style={styles.quickActionsGrid}>
-            <Pressable
-              style={({ pressed }) => [pressed && { opacity: 0.75 }]}
-              onPress={() => router.push("/scanner/scan")}
+          <Pressable
+            style={({ pressed }) => [pressed && { opacity: 0.8 }]}
+            onPress={() => router.push("/scanner/scan")}
+          >
+            <LinearGradient
+              colors={["#10B981", "#059669"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.quickActionCard}
             >
-              <LinearGradient colors={["#10B981", "#059669"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.quickActionCard}>
-                <Text style={styles.quickActionEmoji}>📱</Text>
+              <Text style={styles.quickActionIcon}>📱</Text>
+              <View style={{ flex: 1 }}>
                 <Text style={styles.quickActionTitle}>Scan Barcode</Text>
-              </LinearGradient>
-            </Pressable>
+                <Text style={styles.quickActionDesc}>Point camera at product</Text>
+              </View>
+              <IconSymbol name="chevron.right" size={20} color="rgba(255,255,255,0.7)" />
+            </LinearGradient>
+          </Pressable>
 
-            <Pressable
-              style={({ pressed }) => [pressed && { opacity: 0.75 }]}
-              onPress={() => router.push("/scanner/search")}
+          <Pressable
+            style={({ pressed }) => [pressed && { opacity: 0.8 }]}
+            onPress={() => router.push("/scanner/search")}
+          >
+            <LinearGradient
+              colors={["#3B82F6", "#1D4ED8"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.quickActionCard}
             >
-              <LinearGradient colors={["#3B82F6", "#1D4ED8"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.quickActionCard}>
-                <Text style={styles.quickActionEmoji}>🔍</Text>
+              <Text style={styles.quickActionIcon}>🔍</Text>
+              <View style={{ flex: 1 }}>
                 <Text style={styles.quickActionTitle}>Search Products</Text>
-              </LinearGradient>
-            </Pressable>
+                <Text style={styles.quickActionDesc}>Find by name or barcode</Text>
+              </View>
+              <IconSymbol name="chevron.right" size={20} color="rgba(255,255,255,0.7)" />
+            </LinearGradient>
+          </Pressable>
 
-            <Pressable
-              style={({ pressed }) => [pressed && { opacity: 0.75 }]}
-              onPress={() => router.push("/scanner/ingredients")}
+          <Pressable
+            style={({ pressed }) => [pressed && { opacity: 0.8 }]}
+            onPress={() => router.push("/scanner/ingredients")}
+          >
+            <LinearGradient
+              colors={["#F59E0B", "#D97706"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.quickActionCard}
             >
-              <LinearGradient colors={["#F59E0B", "#D97706"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.quickActionCard}>
-                <Text style={styles.quickActionEmoji}>📖</Text>
-                <Text style={styles.quickActionTitle}>Ingredients</Text>
-              </LinearGradient>
-            </Pressable>
+              <Text style={styles.quickActionIcon}>📖</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.quickActionTitle}>E-Numbers & Additives</Text>
+                <Text style={styles.quickActionDesc}>Decode food additives</Text>
+              </View>
+              <IconSymbol name="chevron.right" size={20} color="rgba(255,255,255,0.7)" />
+            </LinearGradient>
+          </Pressable>
 
-            <Pressable
-              style={({ pressed }) => [pressed && { opacity: 0.75 }]}
-              onPress={() => router.push("/scanner/learn")}
+          <Pressable
+            style={({ pressed }) => [pressed && { opacity: 0.8 }]}
+            onPress={() => router.push("/scanner/learn")}
+          >
+            <LinearGradient
+              colors={["#8B5CF6", "#6D28D9"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.quickActionCard}
             >
-              <LinearGradient colors={["#8B5CF6", "#6D28D9"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.quickActionCard}>
-                <Text style={styles.quickActionEmoji}>📚</Text>
+              <Text style={styles.quickActionIcon}>📚</Text>
+              <View style={{ flex: 1 }}>
                 <Text style={styles.quickActionTitle}>Learn Halal</Text>
-              </LinearGradient>
-            </Pressable>
-          </View>
+                <Text style={styles.quickActionDesc}>Islamic food knowledge</Text>
+              </View>
+              <IconSymbol name="chevron.right" size={20} color="rgba(255,255,255,0.7)" />
+            </LinearGradient>
+          </Pressable>
         </View>
 
         {/* Today's Insight */}
@@ -300,11 +334,10 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 15, fontWeight: "700", color: "#FFFFFF", marginBottom: 10 },
   sectionRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
   seeAll: { fontSize: 13, color: "#4ADE80", fontWeight: "600" },
-  quickActionsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 8 },
-  quickActionCard: { width: "48%", borderRadius: 14, padding: 16, height: 110, justifyContent: "center", alignItems: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" },
-  quickActionEmoji: { fontSize: 28, marginBottom: 8 },
-  quickActionTitle: { fontSize: 13, fontWeight: "700", color: "#FFFFFF", textAlign: "center", lineHeight: 16 },
-  quickActionSub: { fontSize: 10, color: "rgba(255,255,255,0.6)", marginTop: 1 },
+  quickActionCard: { borderRadius: 16, padding: 16, marginBottom: 12, flexDirection: "row", alignItems: "center", gap: 14 },
+  quickActionIcon: { fontSize: 28 },
+  quickActionTitle: { fontSize: 15, fontWeight: "700", color: "#FFFFFF" },
+  quickActionDesc: { fontSize: 12, color: "rgba(255,255,255,0.7)", marginTop: 4, lineHeight: 18 },
   insightCard: { borderRadius: 14, padding: 12, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },
   insightHeader: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
   insightIcon: { fontSize: 16, marginRight: 6 },
@@ -333,7 +366,7 @@ const styles = StyleSheet.create({
   emptyButtonText: { color: "#FFFFFF", fontWeight: "700", fontSize: 14 },
   statsGrid: { flexDirection: "row", gap: 10 },
   statCard: { flex: 1, backgroundColor: "#111827", borderRadius: 12, padding: 12, alignItems: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },
-  quickActionContent: { flexDirection: "row", alignItems: "center", gap: 10 },
+
   statNumber: { fontSize: 20, fontWeight: "800", color: "#FFFFFF" },
   statLabel: { fontSize: 9, color: "#64748B", marginTop: 2, textAlign: "center", lineHeight: 12 },
   disclaimer: { marginHorizontal: 20, marginTop: 20, backgroundColor: "#1C1917", borderRadius: 10, padding: 12 },

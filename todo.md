@@ -167,4 +167,4 @@
 - [x] Redesign Scanner home screen cards with better graphics and compact layout
 - [x] Improve card styling: icons, gradients, spacing
 - [x] Make cards more visually appealing and less elongated
-- [x] Fix card layout — vertical design with icon on top, text below (clean 2x2 grid)
+- [x] Fix card layout — horizontal design matching Learn Halal cards (icon + title + description + chevron)
