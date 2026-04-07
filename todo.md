@@ -177,3 +177,8 @@
 - [x] Fix Adhan audio not playing in APK at prayer times
 - [x] Fix Adhan preview not working in APK build
 - [x] Ensure Adhan audio is properly bundled and accessible offline in APK
+
+## Adhan Preview Audio Issue
+- [x] Fix Adhan preview audio — no sound coming out when user tries to preview
+- [x] Verify audio file is loading correctly
+- [x] Ensure audio volume and playback settings are correct

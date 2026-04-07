@@ -156,17 +156,39 @@ export default function PrayerScreen() {
       const player = createAudioPlayer({ uri: audioUri });
       adhanPlayerRef.current = player;
       
-      // Set audio mode to play in silent mode
-      await setAudioModeAsync({ playsInSilentMode: true });
+      // Set audio mode FIRST to ensure it plays in silent mode with max volume
+      await setAudioModeAsync({
+        playsInSilentMode: true,
+      });
       
+      // Set volume to maximum
+      player.volume = 1.0;
+      
+      // Play the audio
+      console.log("[Adhan Preview] Starting playback");
       await player.play();
       setAdhanPlaying(true);
-      setTimeout(() => {
-        player.remove();
-        adhanPlayerRef.current = null;
+      
+      // Auto-stop after 10 seconds
+      const timeoutId = setTimeout(async () => {
+        try {
+          if (adhanPlayerRef.current) {
+            await adhanPlayerRef.current.pause();
+            adhanPlayerRef.current.remove();
+            adhanPlayerRef.current = null;
+          }
+        } catch (e) {
+          console.warn("Error stopping audio:", e);
+        }
         setAdhanPlaying(false);
       }, 10000);
-    } catch {}
+      
+      return () => clearTimeout(timeoutId);
+    } catch (error) {
+      console.error("[Adhan Preview] Error:", error);
+      setAdhanPlaying(false);
+      Alert.alert("Audio Error", "Could not play Adhan audio. Please check your device volume.");
+    }
   }, []);
 
   const toggleNotification = useCallback(async (prayerKey: keyof typeof settings.notifications) => {
