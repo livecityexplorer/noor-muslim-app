@@ -2,6 +2,7 @@ import { createAudioPlayer, setAudioModeAsync } from "expo-audio";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Location from "expo-location";
 import * as Haptics from "expo-haptics";
+import { Asset } from "expo-asset";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -148,8 +149,10 @@ export default function PrayerScreen() {
       const adhan = ADHAN_STYLES.find((a) => a.id === adhanId);
       if (!adhan) return;
       // Use the bundled custom Adhan audio file
-      // Use require() for all platforms to ensure proper bundling
-      const audioUri = require("@/assets/sounds/adhan_custom.mp3");
+      // Load asset to ensure it's available in APK
+      const asset = Asset.fromModule(require("@/assets/sounds/adhan_custom.mp3"));
+      await asset.downloadAsync();
+      const audioUri = asset.localUri || asset.uri;
       
       console.log("[Adhan Preview] Audio URI:", audioUri);
       
@@ -165,7 +168,7 @@ export default function PrayerScreen() {
       player.volume = 1.0;
       
       // Play the audio
-      console.log("[Adhan Preview] Starting playback");
+      console.log("[Adhan Preview] Starting playback from:", audioUri);
       await player.play();
       setAdhanPlaying(true);
       

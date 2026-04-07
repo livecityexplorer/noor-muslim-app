@@ -187,3 +187,8 @@
 - [x] Fix Adhan audio in APK build — use require() for all platforms for proper bundling
 - [x] Add stop button to control Adhan playback when it's playing
 - [x] Test Adhan notification audio at prayer times in APK
+
+## Adhan Audio Error in APK - URGENT
+- [x] Fix "Could not play Adhan audio" error in APK build
+- [x] Use proper asset loading method that works in compiled APK (Asset.fromModule + downloadAsync)
+- [x] Verify audio file is accessible from APK filesystem
