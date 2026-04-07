@@ -206,5 +206,5 @@
 
 ## Qibla Compass Rebuild
 - [x] Rebuild Qibla Compass from scratch with improved design
-- [x] Fix compass indicator rotation in APK build
+- [x] Fix compass indicator rotation in APK build with proper sensor integration
 - [x] Improve overall UI/UX and functionality
