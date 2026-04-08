@@ -208,3 +208,8 @@
 - [x] Rebuild Qibla Compass from scratch with improved design
 - [x] Fix compass indicator rotation in APK build with proper sensor integration
 - [x] Improve overall UI/UX and functionality
+
+## Qibla Compass Critical Issues
+- [x] Fix compass rotation accuracy — improved magnetometer calibration and heading calculation
+- [x] Fix Kaaba location detection — using proper Haversine bearing calculation
+- [x] Fix overlayed design layout — redesigned with proper spacing and ScrollView
